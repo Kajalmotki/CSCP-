@@ -1,7 +1,7 @@
 import React from 'react';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, onClose, quizStats = [] }) => {
+const Sidebar = ({ isOpen, onClose, quizStats = [], onChapterClick }) => {
   return (
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
@@ -19,14 +19,18 @@ const Sidebar = ({ isOpen, onClose, quizStats = [] }) => {
 
       <div className="sidebar-content">
         <div className="info-box">
-          <p>Track your accuracy across all 8 CSCP modules.</p>
+          <p>Track your accuracy across all 8 CSCP modules. Click for details.</p>
         </div>
 
         <div className="tracker-container">
           {quizStats.map((stat) => {
             const accuracy = stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : 0;
             return (
-              <div key={stat.chapter} className="chapter-stat">
+              <div
+                key={stat.chapter}
+                className="chapter-stat clickable"
+                onClick={() => onChapterClick?.(stat.chapter)}
+              >
                 <div className="stat-header">
                   <span className="chapter-name">Chapter {stat.chapter}</span>
                   <span className="accuracy-text">{stat.total > 0 ? `${accuracy}%` : '-'}</span>

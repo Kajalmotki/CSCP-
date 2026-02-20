@@ -74,7 +74,7 @@ export const generateQuizQuestion = (type) => {
     let responseText = '';
 
     if (type === 'guess') {
-        responseText = `🎲 **Guess the Term!**\n\nRead the following definition and tell me the correct CSCP term:\n\n> _"${correctItem.definition}"_\n\n_(Type your guess below, or type "stop" to exit the quiz.)_`;
+        responseText = `🎲 **Guess the Term!** _(From Chapter ${chapter})_\n\nRead the following definition and tell me the correct CSCP term:\n\n> _"${correctItem.definition}"_\n\n_(Type your guess below, or type "stop" to exit the quiz.)_`;
 
         return {
             text: responseText,
@@ -108,7 +108,7 @@ export const generateQuizQuestion = (type) => {
             return `**${labels[i]})** ${opt}`;
         }).join('\n');
 
-        responseText = `📋 **Multiple Choice Quiz!**\n\n**Definition:**\n> _"${correctItem.definition}"_\n\n**Which term does this describe?**\n${formattedOptions}\n\n_(Reply with A, B, C, D, or the full term. Type "stop" to end.)_`;
+        responseText = `📋 **Multiple Choice Quiz!** _(From Chapter ${chapter})_\n\n**Definition:**\n> _"${correctItem.definition}"_\n\n**Which term does this describe?**\n${formattedOptions}\n\n_(Reply with A, B, C, D, or the full term. Type "stop" to end.)_`;
 
         return {
             text: responseText,

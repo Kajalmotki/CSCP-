@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
+import ChapterModal from './components/ChapterModal';
 import { CSCP_PERMANENT_KNOWLEDGE } from './data/csc_permanent_data';
 import './App.css';
 
@@ -13,6 +14,7 @@ const INITIAL_STATS = Array.from({ length: 8 }, (_, i) => ({
 function App() {
   const [cscpContext, setCscpContext] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeChapter, setActiveChapter] = useState(null);
 
   // Persistent Quiz Stats tracking
   const [quizStats, setQuizStats] = useState(() => {
@@ -60,11 +62,19 @@ function App() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         quizStats={quizStats}
+        onChapterClick={setActiveChapter}
       />
       <ChatArea
         cscpContext={cscpContext}
         permanentKnowledge={CSCP_PERMANENT_KNOWLEDGE}
         onQuizResult={handleQuizResult}
+      />
+
+      <ChapterModal
+        isOpen={activeChapter !== null}
+        onClose={() => setActiveChapter(null)}
+        chapter={activeChapter}
+        stat={activeChapter ? quizStats.find(s => s.chapter === activeChapter) : null}
       />
 
       {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
