@@ -14,8 +14,6 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    /* Pin messages to bottom when few, expand normally */
     gap: 1.5rem;
     scrollbar-width: none;
     /* Firefox */
@@ -26,6 +24,12 @@
 .messages-container::-webkit-scrollbar {
     display: none;
     /* Chrome, Safari and Opera */
+}
+
+/* Push messages to bottom when few, without breaking scroll */
+.messages-container::before {
+    content: '';
+    flex: 1 1 auto;
 }
 
 .message-wrapper {
