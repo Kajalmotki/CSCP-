@@ -1,4 +1,4 @@
-import { CSCP_PERMANENT_KNOWLEDGE } from '../data/csc_permanent_data';
+import { CSCP_PERMANENT_KNOWLEDGE } from '../data/csc_permanent_data.js';
 
 // Normalize text for comparison
 const normalize = (text) => text?.toLowerCase().replace(/[^a-z0-9\s]/g, '') || '';

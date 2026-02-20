@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import ChapterModal from './components/ChapterModal';
-import { CSCP_PERMANENT_KNOWLEDGE } from './data/csc_permanent_data';
+import { CSCP_PERMANENT_KNOWLEDGE } from './data/csc_permanent_data.js';
 import './App.css';
 
 const INITIAL_STATS = Array.from({ length: 8 }, (_, i) => ({
