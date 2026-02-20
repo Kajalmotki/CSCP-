@@ -3,6 +3,8 @@ import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import ChapterModal from './components/ChapterModal';
 import { CSCP_PERMANENT_KNOWLEDGE } from './data/csc_permanent_data.js';
+import confetti from 'canvas-confetti';
+import { playSound, triggerHaptic } from './utils/haptics.js';
 import './App.css';
 
 const INITIAL_STATS = Array.from({ length: 8 }, (_, i) => ({
@@ -61,6 +63,19 @@ function App() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  // Dark/Light Theme
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('cscp_theme') || 'light';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('cscp_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
   useEffect(() => {
     localStorage.setItem('cscp_srs_progress', JSON.stringify(flashcardProgress));
   }, [flashcardProgress]);
@@ -109,12 +124,25 @@ function App() {
     setGamification(prev => {
       const newXp = prev.xp + amount;
       const newLevel = Math.floor(newXp / 100) + 1;
+
+      if (newLevel > prev.level) {
+        // Level Up Celebration!
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b']
+        });
+        playSound('ding');
+        triggerHaptic('success');
+      }
+
       return { ...prev, xp: newXp, level: newLevel };
     });
   };
 
   return (
-    <div className="app-container">
+    <div className="app-container" data-theme={theme}>
       <header className="mobile-header glass-panel">
         <button className="menu-toggle" onClick={toggleSidebar}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -124,7 +152,26 @@ function App() {
           </svg>
         </button>
         <h1 className="header-title text-gradient">CSCP Master</h1>
-        <div style={{ width: 24 }}></div> {/* Spacer */}
+
+        <button className="theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme" style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-primary)' }}>
+          {theme === 'light' ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+          )}
+        </button>
       </header>
 
       <Sidebar

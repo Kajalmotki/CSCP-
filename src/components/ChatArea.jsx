@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { generateLocalResponse, evaluateQuizAnswer, generateQuizQuestion } from '../utils/localAI';
+import { playSound, triggerHaptic } from '../utils/haptics';
 import './ChatArea.css';
 
 const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashcardProgress, onFlashcardReview }) => {
@@ -32,10 +33,13 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
         setMessages((prev) => [...prev, userMessage]);
         setInputVal('');
         setIsTyping(true);
+        playSound('pop');
+        triggerHaptic('light');
 
         setTimeout(() => {
             let nextState = quizState;
             let responseText = '';
+            let responseOptions = null;
 
             // If a quiz is active, evaluate the answer
             if (quizState?.active) {
@@ -52,12 +56,18 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
                 if (evalResult.isCorrect) {
                     addXP?.(10);
                     responseText += '\n\n✨ **+10 XP!**';
+                    playSound('ding');
+                    triggerHaptic('success');
+                } else {
+                    playSound('thud');
+                    triggerHaptic('error');
                 }
 
                 if (evalResult.newState === 'continue') {
                     // Generate the next question immediately after providing the answer feedback
                     const nextQ = generateQuizQuestion(quizState.type, flashcardProgress);
                     responseText += '\n\n---\n\n' + nextQ.text;
+                    responseOptions = nextQ.options;
                     nextState = nextQ.state;
                 } else {
                     nextState = evalResult.newState;
@@ -68,6 +78,7 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
 
                 if (typeof result === 'object' && result !== null) {
                     responseText = result.text;
+                    responseOptions = result.options;
                     nextState = result.state;
                 } else {
                     responseText = result;
@@ -75,7 +86,7 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
             }
 
             setQuizState(nextState);
-            const aiMessage = { id: Date.now() + 1, role: 'ai', text: responseText };
+            const aiMessage = { id: Date.now() + 1, role: 'ai', text: responseText, options: responseOptions };
             setMessages((prev) => [...prev, aiMessage]);
             setIsTyping(false);
         }, 400);
@@ -101,16 +112,47 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
         });
     };
 
+    const handleOptionClick = (term) => {
+        if (!quizState?.active) return;
+        setInputVal(term);
+        // We need a small hack to submit the form programmatically with the new value
+        triggerHaptic('light');
+        setTimeout(() => {
+            document.querySelector('.input-form').dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }, 50);
+    };
+
     return (
         <main className="chat-area">
             <div className="messages-container">
-                {messages.map((msg) => (
-                    <div key={msg.id} className={`message-wrapper ${msg.role}`}>
-                        <div className={`message-bubble ${msg.role === 'ai' ? 'glass-panel' : ''}`}>
-                            {msg.role === 'ai' ? renderText(msg.text) : msg.text}
+                {messages.map((msg, index) => {
+                    // Only show options on the most recent message if quiz is active
+                    const isLatestMessage = index === messages.length - 1;
+                    const showOptions = msg.role === 'ai' && msg.options && isLatestMessage && quizState?.active;
+
+                    return (
+                        <div key={msg.id} className={`message-wrapper ${msg.role}`}>
+                            <div className={`message-bubble ${msg.role === 'ai' ? 'glass-panel' : ''}`}>
+                                {msg.role === 'ai' ? renderText(msg.text) : msg.text}
+
+                                {showOptions && (
+                                    <div className="quiz-options-grid">
+                                        {msg.options.map((opt, i) => (
+                                            <button
+                                                key={i}
+                                                className="quiz-option-btn glass-panel hover-glow"
+                                                onClick={() => handleOptionClick(opt.term)}
+                                            >
+                                                <span className="opt-letter">{opt.letter}</span>
+                                                <span className="opt-term">{opt.term}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
                 {isTyping && (
                     <div className="message-wrapper ai">
                         <div className="message-bubble glass-panel typing-indicator">

@@ -89,24 +89,19 @@ export const generateQuizQuestion = (type, flashcardProgress = {}) => {
 
     options.sort(() => Math.random() - 0.5);
 
-    const labels = ['A', 'B', 'C', 'D'];
-    let correctLabel = '';
-    const formattedOptions = options.map((opt, i) => {
-        if (opt === correctItem.term) correctLabel = labels[i];
-        return `**${labels[i]})** ${opt}`;
-    }).join('\n');
-
-    const responseText = `📋 **Multiple Choice Quiz!** _(From Chapter ${chapter})_\n\n**Definition:**\n> _"${correctItem.definition}"_\n\n**Which term does this describe?**\n${formattedOptions}\n\n_(Reply with A, B, C, D, or the full term. Type "stop" to end.)_`;
+    const responseText = `📋 **Multiple Choice Quiz!** _(From Chapter ${chapter})_\n\n**Definition:**\n> _"${correctItem.definition}"_\n\n**Which term does this describe?**`;
+    const generatedOptions = options.map((opt, i) => ({ letter: labels[i], term: opt }));
 
     return {
         text: responseText,
+        options: generatedOptions,
         state: {
             active: true,
             type: type,
             correctTerm: correctItem.term,
             correctLetter: correctLabel,
             chapter: chapter,
-            options: options.map((opt, i) => ({ letter: labels[i], term: opt }))
+            options: generatedOptions
         }
     };
 };
