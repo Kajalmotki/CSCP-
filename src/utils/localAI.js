@@ -63,25 +63,53 @@ const isMultipleChoiceQuiz = (query) => {
     return /start.*quiz|quiz|multiple choice|options|test me/.test(norm);
 };
 
-export const generateQuizQuestion = (type, flashcardProgress = {}) => {
-    const totalItems = CSCP_PERMANENT_KNOWLEDGE.length;
-    const randomIndex = Math.floor(Math.random() * totalItems);
-    const correctItem = CSCP_PERMANENT_KNOWLEDGE[randomIndex];
+const extractChapterNumber = (query) => {
+    const match = query.match(/chapter\s*(\d)/i);
+    return match ? parseInt(match[1]) : null;
+};
 
-    const chapter = Math.floor((randomIndex / totalItems) * 8) + 1;
+const isChapterInquiry = (query) => {
+    const norm = normalize(query);
+    return /how many.*chapter|flashcards.*chapter|cards.*chapter/.test(norm);
+};
+
+const isChapterQuizSelect = (query) => {
+    const norm = normalize(query);
+    return /chapter.*quiz|quiz.*chapter|^chapter\s\d$/.test(norm);
+};
+
+export const generateQuizQuestion = (type, flashcardProgress = {}, chapterFilter = null) => {
+    const totalItems = CSCP_PERMANENT_KNOWLEDGE.length;
+
+    // Map items to their estimated chapter
+    let pool = CSCP_PERMANENT_KNOWLEDGE.map((item, index) => ({
+        item,
+        chapter: Math.floor((index / totalItems) * 8) + 1
+    }));
+
+    if (chapterFilter && chapterFilter >= 1 && chapterFilter <= 8) {
+        pool = pool.filter(p => p.chapter === chapterFilter);
+    }
+
+    if (pool.length === 0) pool = [{ item: CSCP_PERMANENT_KNOWLEDGE[0], chapter: 1 }]; // fallback
+
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    const selected = pool[randomIndex];
+    const correctItem = selected.item;
+    const chapter = selected.chapter;
 
     if (type === 'guess') {
         const responseText = `🎲 **Guess the Term!** _(From Chapter ${chapter})_\n\nRead the following definition and tell me the correct CSCP term:\n\n> _"${correctItem.definition}"_\n\n_(Type your guess below, or type "stop" to exit the quiz.)_`;
         return {
             text: responseText,
-            state: { active: true, type: 'guess', correctTerm: correctItem.term, chapter: chapter }
+            state: { active: true, type: 'guess', correctTerm: correctItem.term, chapter: chapter, chapterFilter: chapterFilter }
         };
     }
 
     const options = [correctItem.term];
     while (options.length < 4) {
-        const wrongIndex = Math.floor(Math.random() * totalItems);
-        const wrongTerm = CSCP_PERMANENT_KNOWLEDGE[wrongIndex].term;
+        const wrongIndex = Math.floor(Math.random() * pool.length);
+        const wrongTerm = pool[wrongIndex].item.term;
         if (!options.includes(wrongTerm)) {
             options.push(wrongTerm);
         }
@@ -89,8 +117,14 @@ export const generateQuizQuestion = (type, flashcardProgress = {}) => {
 
     options.sort(() => Math.random() - 0.5);
 
+    const labels = ['A', 'B', 'C', 'D'];
+    let correctLabel = '';
+    const generatedOptions = options.map((opt, i) => {
+        if (opt === correctItem.term) correctLabel = labels[i];
+        return { letter: labels[i], term: opt };
+    });
+
     const responseText = `📋 **Multiple Choice Quiz!** _(From Chapter ${chapter})_\n\n**Definition:**\n> _"${correctItem.definition}"_\n\n**Which term does this describe?**`;
-    const generatedOptions = options.map((opt, i) => ({ letter: labels[i], term: opt }));
 
     return {
         text: responseText,
@@ -101,6 +135,7 @@ export const generateQuizQuestion = (type, flashcardProgress = {}) => {
             correctTerm: correctItem.term,
             correctLetter: correctLabel,
             chapter: chapter,
+            chapterFilter: chapterFilter,
             options: generatedOptions
         }
     };
@@ -174,7 +209,43 @@ export const generateLocalResponse = (query, additionalContext = '', flashcardPr
         return "👋 Hello! I'm your CSCP Exam Prep AI. I have " + CSCP_PERMANENT_KNOWLEDGE.length + " flashcard terms loaded from all 8 Modules.\n\nTry asking me to:\n• **Define a term** (e.g., \"What is Keiretsu?\")\n• **Ask me any flashcard** (Open-ended guess)\n• **Start a quiz** (Multiple choice)\n• **List all topics**";
     }
 
-    // Handle quiz starting requests
+    // Handle Chapter inquiries ("how many flashcards in Chapter 2")
+    const chapterNum = extractChapterNumber(query);
+
+    if (isChapterInquiry(query) && chapterNum) {
+        const totalItems = CSCP_PERMANENT_KNOWLEDGE.length;
+        const count = CSCP_PERMANENT_KNOWLEDGE.filter((_, i) => Math.floor((i / totalItems) * 8) + 1 === chapterNum).length;
+
+        return {
+            text: `📊 **Chapter ${chapterNum}** currently has **${count} flashcards** loaded in my system.\n\nWould you like to start a filtered quiz on just this chapter?`,
+            options: [
+                { letter: '▶️', term: `Quiz Chapter ${chapterNum}` },
+                { letter: '📚', term: `Read Chapter ${chapterNum} Topics` } // Will just list them out
+            ],
+            state: null
+        };
+    }
+
+    // Handle generic Chapter Quiz requests or specific Chapter Quiz starts
+    if (isChapterQuizSelect(query)) {
+        if (chapterNum && chapterNum >= 1 && chapterNum <= 8) {
+            return generateQuizQuestion('mcq', flashcardProgress, chapterNum);
+        } else {
+            // Give them a grid of 8 buttons
+            const chapterOptions = Array.from({ length: 8 }, (_, i) => ({
+                letter: `${i + 1}`,
+                term: `Chapter ${i + 1}`
+            }));
+
+            return {
+                text: `📚 **Chapter Selection**\n\nWhich chapter would you like to build a quiz from?`,
+                options: chapterOptions,
+                state: null
+            };
+        }
+    }
+
+    // Handle normal quiz starting requests
     if (isOpenEndedQuiz(query)) return generateQuizQuestion('guess', flashcardProgress);
     if (isMultipleChoiceQuiz(query)) return generateQuizQuestion('mcq', flashcardProgress);
 

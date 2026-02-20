@@ -65,7 +65,7 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
 
                 if (evalResult.newState === 'continue') {
                     // Generate the next question immediately after providing the answer feedback
-                    const nextQ = generateQuizQuestion(quizState.type, flashcardProgress);
+                    const nextQ = generateQuizQuestion(quizState.type, flashcardProgress, quizState.chapterFilter);
                     responseText += '\n\n---\n\n' + nextQ.text;
                     responseOptions = nextQ.options;
                     nextState = nextQ.state;
@@ -113,7 +113,6 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
     };
 
     const handleOptionClick = (term) => {
-        if (!quizState?.active) return;
         setInputVal(term);
         // We need a small hack to submit the form programmatically with the new value
         triggerHaptic('light');
@@ -126,9 +125,9 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
         <main className="chat-area">
             <div className="messages-container">
                 {messages.map((msg, index) => {
-                    // Only show options on the most recent message if quiz is active
+                    // Only show options on the most recent message
                     const isLatestMessage = index === messages.length - 1;
-                    const showOptions = msg.role === 'ai' && msg.options && isLatestMessage && quizState?.active;
+                    const showOptions = msg.role === 'ai' && msg.options && isLatestMessage;
 
                     return (
                         <div key={msg.id} className={`message-wrapper ${msg.role}`}>
