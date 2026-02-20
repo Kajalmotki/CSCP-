@@ -111,7 +111,8 @@ export const generateQuizQuestion = (type) => {
                 active: true,
                 type: 'mcq',
                 correctTerm: correctItem.term,
-                correctLetter: correctLabel
+                correctLetter: correctLabel,
+                options: options.map((opt, i) => ({ letter: labels[i], term: opt }))
             }
         };
     }
@@ -129,13 +130,21 @@ export const evaluateQuizAnswer = (query, quizState) => {
     }
 
     let isCorrect = false;
+    let guessedTerm = query.trim();
 
     if (quizState.type === 'guess') {
         isCorrect = (normUser === normCorrect);
     } else if (quizState.type === 'mcq') {
         const normLetter = quizState.correctLetter.toLowerCase();
-        // Check if user replied with just the letter or the full term
-        isCorrect = (normUser === normLetter || normUser === normCorrect);
+
+        // Check if user replied with just a letter
+        const matchOption = quizState.options.find(o => normalize(o.letter) === normUser || normalize(o.term) === normUser);
+        if (matchOption) {
+            guessedTerm = matchOption.term;
+            isCorrect = (normalize(matchOption.term) === normCorrect);
+        } else {
+            isCorrect = (normUser === normCorrect);
+        }
     }
 
     if (isCorrect) {
@@ -144,8 +153,19 @@ export const evaluateQuizAnswer = (query, quizState) => {
             newState: 'continue' // Signal front-end to auto-generate next
         };
     } else {
+        let feedback = `❌ **Not quite.** The correct answer was **${quizState.correctTerm}**.\n\n`;
+
+        // Find the definition of what they actually guessed to explain why it's wrong
+        if (guessedTerm && guessedTerm.length > 2) {
+            const wrongMatch = findMatches(guessedTerm, 1);
+            if (wrongMatch.length > 0 && normalize(wrongMatch[0].term) !== normCorrect) {
+                feedback += `💡 _You guessed **${wrongMatch[0].term}**, which means:_\n> ${wrongMatch[0].definition}\n\n`;
+            }
+        }
+        feedback += `Here is the next question:`;
+
         return {
-            text: `❌ **Not quite.** The correct answer was **${quizState.correctTerm}**.\n\nHere is the next question:`,
+            text: feedback,
             newState: 'continue'
         };
     }
