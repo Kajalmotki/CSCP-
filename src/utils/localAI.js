@@ -211,7 +211,7 @@ export const generateLocalResponse = (query, additionalContext = '', flashcardPr
             options: [
                 { letter: '❓', term: 'What is Keiretsu?' },
                 { letter: '🎲', term: 'Ask me any flashcard' },
-                { letter: '📋', term: 'Start a quiz' },
+                { letter: '📋', term: 'Select Chapter Quiz' },
                 { letter: '📑', term: 'List all topics' }
             ],
             state: null

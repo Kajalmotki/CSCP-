@@ -12,7 +12,7 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
             options: [
                 { letter: '❓', term: 'What is Keiretsu?' },
                 { letter: '🎲', term: 'Ask me any flashcard' },
-                { letter: '📋', term: 'Start a quiz' },
+                { letter: '📋', term: 'Select Chapter Quiz' },
                 { letter: '📑', term: 'List all topics' }
             ]
         }
