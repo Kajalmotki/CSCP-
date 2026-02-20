@@ -1,7 +1,7 @@
 import React from 'react';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, onClose, quizStats = [], onChapterClick }) => {
+const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick }) => {
   return (
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
@@ -18,6 +18,30 @@ const Sidebar = ({ isOpen, onClose, quizStats = [], onChapterClick }) => {
       </div>
 
       <div className="sidebar-content">
+        {gamification && (
+          <div className="gamification-dashboard">
+            <div className="game-stats">
+              <div className="stat-item">
+                <span className="stat-icon">🔥</span>
+                <div className="stat-text">
+                  <span className="stat-value">{gamification.streak}</span>
+                  <span className="stat-label">Day Streak</span>
+                </div>
+              </div>
+              <div className="stat-item">
+                <span className="stat-icon">⭐</span>
+                <div className="stat-text">
+                  <span className="stat-value">Lvl {gamification.level}</span>
+                  <span className="stat-label">{gamification.xp} XP</span>
+                </div>
+              </div>
+            </div>
+            <div className="xp-bar-bg">
+              <div className="xp-fill" style={{ width: `${gamification.xp % 100}%` }}></div>
+            </div>
+          </div>
+        )}
+
         <div className="info-box">
           <p>Track your accuracy across all 8 CSCP modules. Click for details.</p>
         </div>

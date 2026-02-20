@@ -22,9 +22,48 @@ function App() {
     return saved ? JSON.parse(saved) : INITIAL_STATS;
   });
 
+  const [gamification, setGamification] = useState(() => {
+    const saved = localStorage.getItem('cscp_gamification');
+    const today = new Date().toISOString().split('T')[0];
+
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      let newStreak = parsed.streak || 1;
+
+      if (parsed.lastLoginDate !== today) {
+        const lastLogin = new Date(parsed.lastLoginDate);
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (lastLogin.toDateString() === yesterday.toDateString()) {
+          newStreak += 1;
+        } else if (lastLogin.toDateString() !== new Date().toDateString()) {
+          newStreak = 1;
+        }
+      }
+      return { ...parsed, streak: newStreak, lastLoginDate: today };
+    }
+
+    return { xp: 0, level: 1, streak: 1, lastLoginDate: today };
+  });
+
   useEffect(() => {
     localStorage.setItem('cscp_quiz_stats', JSON.stringify(quizStats));
   }, [quizStats]);
+
+  useEffect(() => {
+    localStorage.setItem('cscp_gamification', JSON.stringify(gamification));
+  }, [gamification]);
+
+  // Flashcard SRS and Mistake Tracking
+  const [flashcardProgress, setFlashcardProgress] = useState(() => {
+    const saved = localStorage.getItem('cscp_srs_progress');
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  useEffect(() => {
+    localStorage.setItem('cscp_srs_progress', JSON.stringify(flashcardProgress));
+  }, [flashcardProgress]);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
 
@@ -41,6 +80,37 @@ function App() {
       }
       return stat;
     }));
+  };
+
+  const handleFlashcardReview = (term, isCorrect) => {
+    setFlashcardProgress(prev => {
+      const current = prev[term] || { mistakeCount: 0, easeFactor: 2.5, interval: 0, lastSeen: 0 };
+      let { mistakeCount, easeFactor, interval } = current;
+
+      if (isCorrect) {
+        if (interval === 0) interval = 1;
+        else if (interval === 1) interval = 6;
+        else interval = Math.round(interval * easeFactor);
+        easeFactor = Math.max(1.3, easeFactor + 0.1);
+      } else {
+        mistakeCount += 1;
+        interval = 0; // Reset interval
+        easeFactor = Math.max(1.3, easeFactor - 0.2);
+      }
+
+      return {
+        ...prev,
+        [term]: { mistakeCount, interval, easeFactor, lastSeen: Date.now() }
+      };
+    });
+  };
+
+  const addXP = (amount) => {
+    setGamification(prev => {
+      const newXp = prev.xp + amount;
+      const newLevel = Math.floor(newXp / 100) + 1;
+      return { ...prev, xp: newXp, level: newLevel };
+    });
   };
 
   return (
@@ -62,12 +132,16 @@ function App() {
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
         quizStats={quizStats}
+        gamification={gamification}
         onChapterClick={setActiveChapter}
       />
       <ChatArea
         cscpContext={cscpContext}
         permanentKnowledge={CSCP_PERMANENT_KNOWLEDGE}
         onQuizResult={handleQuizResult}
+        addXP={addXP}
+        flashcardProgress={flashcardProgress}
+        onFlashcardReview={handleFlashcardReview}
       />
 
       <ChapterModal

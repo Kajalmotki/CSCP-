@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { generateLocalResponse, evaluateQuizAnswer, generateQuizQuestion } from '../utils/localAI';
 import './ChatArea.css';
 
-const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult }) => {
+const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashcardProgress, onFlashcardReview }) => {
     const [messages, setMessages] = useState([
         {
             id: 1,
@@ -44,11 +44,19 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult }) => {
 
                 if (evalResult.chapter) {
                     onQuizResult?.(evalResult.chapter, evalResult.isCorrect);
+                    if (quizState.correctTerm) {
+                        onFlashcardReview?.(quizState.correctTerm, evalResult.isCorrect);
+                    }
+                }
+
+                if (evalResult.isCorrect) {
+                    addXP?.(10);
+                    responseText += '\n\n✨ **+10 XP!**';
                 }
 
                 if (evalResult.newState === 'continue') {
                     // Generate the next question immediately after providing the answer feedback
-                    const nextQ = generateQuizQuestion(quizState.type);
+                    const nextQ = generateQuizQuestion(quizState.type, flashcardProgress);
                     responseText += '\n\n---\n\n' + nextQ.text;
                     nextState = nextQ.state;
                 } else {
@@ -56,7 +64,7 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult }) => {
                 }
             } else {
                 // Standard flow or start a new quiz
-                const result = generateLocalResponse(userText, cscpContext);
+                const result = generateLocalResponse(userText, cscpContext, flashcardProgress);
 
                 if (typeof result === 'object' && result !== null) {
                     responseText = result.text;

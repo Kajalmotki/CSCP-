@@ -63,65 +63,97 @@ const isMultipleChoiceQuiz = (query) => {
     return /start.*quiz|quiz|multiple choice|options|test me/.test(norm);
 };
 
-export const generateQuizQuestion = (type) => {
-    const totalItems = CSCP_PERMANENT_KNOWLEDGE.length;
-    const randomIndex = Math.floor(Math.random() * totalItems);
-    const correctItem = CSCP_PERMANENT_KNOWLEDGE[randomIndex];
+const isMistakesQuiz = (query) => /review.*mistake|weakness|wrong|failed/.test(normalize(query));
+const isSRSQuiz = (query) => /srs|spaced repetition|smart quiz/.test(normalize(query));
+const isCramQuiz = (query) => /cram|night before|exam mode|rapid fire/.test(normalize(query));
+const isScenarioQuiz = (query) => /scenario|practical|story|word problem/.test(normalize(query));
 
-    // Estimate Chapter (1 to 8) based on even distribution of 462 terms
+export const generateQuizQuestion = (type, flashcardProgress = {}) => {
+    const totalItems = CSCP_PERMANENT_KNOWLEDGE.length;
+    let correctItem = null;
+    let randomIndex = 0;
+
+    let responsePrefix = '';
+
+    if (type === 'mistakes') {
+        const mistakes = CSCP_PERMANENT_KNOWLEDGE.filter(k => flashcardProgress[k.term]?.mistakeCount > 0);
+        if (mistakes.length === 0) {
+            return { text: "🎉 You don't have any recorded mistakes yet! Keep up the good work. Try a standard quiz instead.", state: null };
+        }
+        correctItem = mistakes[Math.floor(Math.random() * mistakes.length)];
+        randomIndex = CSCP_PERMANENT_KNOWLEDGE.indexOf(correctItem);
+        responsePrefix = "🎯 **Reviewing Mistakes**\n\n";
+    } else if (type === 'srs') {
+        const sorted = [...CSCP_PERMANENT_KNOWLEDGE].sort((a, b) => {
+            const progA = flashcardProgress[a.term] || { interval: 0, lastSeen: 0 };
+            const progB = flashcardProgress[b.term] || { interval: 0, lastSeen: 0 };
+            if (progA.interval !== progB.interval) return progA.interval - progB.interval;
+            return progA.lastSeen - progB.lastSeen;
+        });
+        const pool = sorted.slice(0, 10);
+        correctItem = pool[Math.floor(Math.random() * pool.length)];
+        randomIndex = CSCP_PERMANENT_KNOWLEDGE.indexOf(correctItem);
+        responsePrefix = "🧠 **Spaced Repetition Review**\n\n";
+    } else {
+        randomIndex = Math.floor(Math.random() * totalItems);
+        correctItem = CSCP_PERMANENT_KNOWLEDGE[randomIndex];
+    }
+
     const chapter = Math.floor((randomIndex / totalItems) * 8) + 1;
 
-    let responseText = '';
+    let responseText = responsePrefix;
 
     if (type === 'guess') {
-        responseText = `🎲 **Guess the Term!** _(From Chapter ${chapter})_\n\nRead the following definition and tell me the correct CSCP term:\n\n> _"${correctItem.definition}"_\n\n_(Type your guess below, or type "stop" to exit the quiz.)_`;
+        responseText += `🎲 **Guess the Term!** _(From Chapter ${chapter})_\n\nRead the following definition and tell me the correct CSCP term:\n\n> _"${correctItem.definition}"_\n\n_(Type your guess below, or type "stop" to exit the quiz.)_`;
 
         return {
             text: responseText,
-            state: {
-                active: true,
-                type: 'guess',
-                correctTerm: correctItem.term,
-                chapter: chapter
-            }
+            state: { active: true, type: 'guess', correctTerm: correctItem.term, chapter: chapter }
         };
     }
 
-    if (type === 'mcq') {
-        // Get 3 random wrong options
-        const options = [correctItem.term];
-        while (options.length < 4) {
-            const wrongIndex = Math.floor(Math.random() * totalItems);
-            const wrongTerm = CSCP_PERMANENT_KNOWLEDGE[wrongIndex].term;
-            if (!options.includes(wrongTerm)) {
-                options.push(wrongTerm);
-            }
+    const options = [correctItem.term];
+    while (options.length < 4) {
+        const wrongIndex = Math.floor(Math.random() * totalItems);
+        const wrongTerm = CSCP_PERMANENT_KNOWLEDGE[wrongIndex].term;
+        if (!options.includes(wrongTerm)) {
+            options.push(wrongTerm);
         }
-
-        // Shuffle options
-        options.sort(() => Math.random() - 0.5);
-
-        const labels = ['A', 'B', 'C', 'D'];
-        let correctLabel = '';
-        const formattedOptions = options.map((opt, i) => {
-            if (opt === correctItem.term) correctLabel = labels[i];
-            return `**${labels[i]})** ${opt}`;
-        }).join('\n');
-
-        responseText = `📋 **Multiple Choice Quiz!** _(From Chapter ${chapter})_\n\n**Definition:**\n> _"${correctItem.definition}"_\n\n**Which term does this describe?**\n${formattedOptions}\n\n_(Reply with A, B, C, D, or the full term. Type "stop" to end.)_`;
-
-        return {
-            text: responseText,
-            state: {
-                active: true,
-                type: 'mcq',
-                correctTerm: correctItem.term,
-                correctLetter: correctLabel,
-                chapter: chapter,
-                options: options.map((opt, i) => ({ letter: labels[i], term: opt }))
-            }
-        };
     }
+
+    options.sort(() => Math.random() - 0.5);
+
+    const labels = ['A', 'B', 'C', 'D'];
+    let correctLabel = '';
+    const formattedOptions = options.map((opt, i) => {
+        if (opt === correctItem.term) correctLabel = labels[i];
+        return `**${labels[i]})** ${opt}`;
+    }).join('\n');
+
+    if (type === 'scenario') {
+        const scenarios = [
+            "A manufacturing plant is experiencing an issue. Specifically they are dealing with:",
+            "During a supply chain audit, the lead manager notes the following definition:",
+            "A logistics company needs to apply a principle described as:"
+        ];
+        const scenarioStr = scenarios[Math.floor(Math.random() * scenarios.length)];
+        responseText += `🤔 **Scenario Mode** _(From Chapter ${chapter})_\n\n${scenarioStr}\n> _"${correctItem.definition}"_\n\n**Which term fits this scenario?**\n${formattedOptions}\n\n_(Reply with A, B, C, D, or the full term. Type "stop" to end.)_`;
+    } else {
+        const title = type === 'cram' ? "🌙 **Cram Mode!**" : (responsePrefix ? "" : "📋 **Multiple Choice Quiz!**");
+        responseText += `${title} _(From Chapter ${chapter})_\n\n**Definition:**\n> _"${correctItem.definition}"_\n\n**Which term does this describe?**\n${formattedOptions}\n\n_(Reply with A, B, C, D, or the full term. Type "stop" to end.)_`;
+    }
+
+    return {
+        text: responseText,
+        state: {
+            active: true,
+            type: type,
+            correctTerm: correctItem.term,
+            correctLetter: correctLabel,
+            chapter: chapter,
+            options: options.map((opt, i) => ({ letter: labels[i], term: opt }))
+        }
+    };
 };
 
 export const evaluateQuizAnswer = (query, quizState) => {
@@ -184,22 +216,21 @@ export const evaluateQuizAnswer = (query, quizState) => {
 };
 
 // Generate a smart, formatted response from the knowledge base (Standard mode)
-export const generateLocalResponse = (query, additionalContext = '') => {
+export const generateLocalResponse = (query, additionalContext = '', flashcardProgress = {}) => {
     const norm = normalize(query);
 
     // Handle greetings
     if (/^(hi|hey|hello|howdy|good morning|good evening)[\s!.]*$/.test(norm)) {
-        return "👋 Hello! I'm your CSCP Exam Prep AI. I have " + CSCP_PERMANENT_KNOWLEDGE.length + " flashcard terms loaded from all 8 Modules.\n\nTry asking me to:\n• **Define a term** (e.g., \"What is Keiretsu?\")\n• **Ask me any flashcard** (Open-ended guess)\n• **Start a quiz** (Multiple choice)\n• **List all topics**";
+        return "👋 Hello! I'm your CSCP Exam Prep AI. I have " + CSCP_PERMANENT_KNOWLEDGE.length + " flashcard terms loaded from all 8 Modules.\n\nTry asking me to:\n• **Review my mistakes** (Weakness mode)\n• **Start SRS Quiz** (Spaced Repetition)\n• **Cram Mode** (Rapid fire)\n• **Scenario Quiz** (Word problems)\n• **Start a quiz** (Multiple choice)";
     }
 
     // Handle quiz starting requests
-    if (isOpenEndedQuiz(query)) {
-        return generateQuizQuestion('guess');
-    }
-
-    if (isMultipleChoiceQuiz(query)) {
-        return generateQuizQuestion('mcq');
-    }
+    if (isMistakesQuiz(query)) return generateQuizQuestion('mistakes', flashcardProgress);
+    if (isSRSQuiz(query)) return generateQuizQuestion('srs', flashcardProgress);
+    if (isCramQuiz(query)) return generateQuizQuestion('cram', flashcardProgress);
+    if (isScenarioQuiz(query)) return generateQuizQuestion('scenario', flashcardProgress);
+    if (isOpenEndedQuiz(query)) return generateQuizQuestion('guess', flashcardProgress);
+    if (isMultipleChoiceQuiz(query)) return generateQuizQuestion('mcq', flashcardProgress);
 
     // Handle list request
     if (isListQuestion(query) && /topic|term|concept|know|cover/.test(norm)) {
