@@ -141,6 +141,14 @@ function App() {
     });
   };
 
+  const resetProgress = () => {
+    if (window.confirm("Are you sure you want to completely erase your Chapter Analysis and Flashcard progress?")) {
+      localStorage.removeItem('cscp_quiz_stats');
+      localStorage.removeItem('cscp_srs_progress');
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="app-container" data-theme={theme}>
       <header className="mobile-header glass-panel">
@@ -181,6 +189,9 @@ function App() {
         quizStats={quizStats}
         gamification={gamification}
         onChapterClick={setActiveChapter}
+        onReset={resetProgress}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
       <ChatArea
         cscpContext={cscpContext}

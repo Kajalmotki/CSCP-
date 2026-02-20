@@ -1,15 +1,15 @@
 import React from 'react';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick, theme, toggleTheme }) => {
+const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick, onReset, theme, toggleTheme }) => {
   return (
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
             className="logo flex-center"
-            onClick={() => window.location.reload()}
-            title="Refresh App"
+            onClick={onReset}
+            title="Reset Progress"
             style={{ cursor: 'pointer', color: 'var(--text-primary)', background: 'transparent', border: 'none', padding: '0.25rem' }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
