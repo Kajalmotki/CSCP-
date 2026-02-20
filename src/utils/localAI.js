@@ -60,7 +60,7 @@ const isOpenEndedQuiz = (query) => {
 
 const isMultipleChoiceQuiz = (query) => {
     const norm = normalize(query);
-    return /start a quiz|multiple choice|options/.test(norm);
+    return /start.*quiz|quiz|multiple choice|options|test me/.test(norm);
 };
 
 export const generateQuizQuestion = (type) => {
