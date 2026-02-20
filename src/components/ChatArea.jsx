@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { generateLocalResponse, evaluateQuizAnswer, generateQuizQuestion } from '../utils/localAI';
 import './ChatArea.css';
 
-const ChatArea = ({ cscpContext }) => {
+const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult }) => {
     const [messages, setMessages] = useState([
         {
             id: 1,
@@ -41,6 +41,10 @@ const ChatArea = ({ cscpContext }) => {
             if (quizState?.active) {
                 const evalResult = evaluateQuizAnswer(userText, quizState);
                 responseText = evalResult.text;
+
+                if (evalResult.chapter) {
+                    onQuizResult?.(evalResult.chapter, evalResult.isCorrect);
+                }
 
                 if (evalResult.newState === 'continue') {
                     // Generate the next question immediately after providing the answer feedback

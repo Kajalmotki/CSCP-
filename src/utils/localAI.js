@@ -64,8 +64,12 @@ const isMultipleChoiceQuiz = (query) => {
 };
 
 export const generateQuizQuestion = (type) => {
-    const randomIndex = Math.floor(Math.random() * CSCP_PERMANENT_KNOWLEDGE.length);
+    const totalItems = CSCP_PERMANENT_KNOWLEDGE.length;
+    const randomIndex = Math.floor(Math.random() * totalItems);
     const correctItem = CSCP_PERMANENT_KNOWLEDGE[randomIndex];
+
+    // Estimate Chapter (1 to 8) based on even distribution of 462 terms
+    const chapter = Math.floor((randomIndex / totalItems) * 8) + 1;
 
     let responseText = '';
 
@@ -77,7 +81,8 @@ export const generateQuizQuestion = (type) => {
             state: {
                 active: true,
                 type: 'guess',
-                correctTerm: correctItem.term
+                correctTerm: correctItem.term,
+                chapter: chapter
             }
         };
     }
@@ -86,7 +91,7 @@ export const generateQuizQuestion = (type) => {
         // Get 3 random wrong options
         const options = [correctItem.term];
         while (options.length < 4) {
-            const wrongIndex = Math.floor(Math.random() * CSCP_PERMANENT_KNOWLEDGE.length);
+            const wrongIndex = Math.floor(Math.random() * totalItems);
             const wrongTerm = CSCP_PERMANENT_KNOWLEDGE[wrongIndex].term;
             if (!options.includes(wrongTerm)) {
                 options.push(wrongTerm);
@@ -112,6 +117,7 @@ export const generateQuizQuestion = (type) => {
                 type: 'mcq',
                 correctTerm: correctItem.term,
                 correctLetter: correctLabel,
+                chapter: chapter,
                 options: options.map((opt, i) => ({ letter: labels[i], term: opt }))
             }
         };
@@ -125,7 +131,9 @@ export const evaluateQuizAnswer = (query, quizState) => {
     if (normUser === 'stop' || normUser === 'exit' || normUser === 'quit') {
         return {
             text: "🛑 Quiz stopped. You can ask me questions normally or start another quiz anytime!",
-            newState: null
+            newState: null,
+            isCorrect: null,
+            chapter: null
         };
     }
 
@@ -150,7 +158,9 @@ export const evaluateQuizAnswer = (query, quizState) => {
     if (isCorrect) {
         return {
             text: `✅ **Correct!** The answer was **${quizState.correctTerm}**.\n\nLet's do another one!`,
-            newState: 'continue' // Signal front-end to auto-generate next
+            newState: 'continue', // Signal front-end to auto-generate next
+            isCorrect: true,
+            chapter: quizState.chapter
         };
     } else {
         let feedback = `❌ **Not quite.** The correct answer was **${quizState.correctTerm}**.\n\n`;
@@ -166,7 +176,9 @@ export const evaluateQuizAnswer = (query, quizState) => {
 
         return {
             text: feedback,
-            newState: 'continue'
+            newState: 'continue',
+            isCorrect: false,
+            chapter: quizState.chapter
         };
     }
 };

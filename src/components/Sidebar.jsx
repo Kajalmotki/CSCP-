@@ -1,28 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './Sidebar.css';
 
-const Sidebar = ({ onDataSave, isOpen, onClose }) => {
-  const [data, setData] = useState('');
-  const [isSaved, setIsSaved] = useState(false);
-
-  const handleSave = () => {
-    if (data.trim()) {
-      onDataSave(data);
-      setIsSaved(true);
-      setTimeout(() => {
-        setIsSaved(false);
-        if (window.innerWidth <= 768) onClose();
-      }, 1500);
-    }
-  };
-
+const Sidebar = ({ isOpen, onClose, quizStats = [] }) => {
   return (
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
         <div className="logo flex-center">
-          <span className="logo-icon">🧠</span>
+          <span className="logo-icon">📈</span>
         </div>
-        <h1 className="sidebar-title text-gradient">CSCP Master</h1>
+        <h1 className="sidebar-title text-gradient">Your Progress</h1>
         <button className="close-sidebar" onClick={onClose}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -33,22 +19,34 @@ const Sidebar = ({ onDataSave, isOpen, onClose }) => {
 
       <div className="sidebar-content">
         <div className="info-box">
-          <p>Paste your CSCP study material below to train the session.</p>
+          <p>Track your accuracy across all 8 CSCP modules.</p>
         </div>
 
-        <textarea
-          className="data-input"
-          placeholder="e.g., Supply chain risk management..."
-          value={data}
-          onChange={(e) => setData(e.target.value)}
-        ></textarea>
-
-        <button
-          className={`save-btn ${isSaved ? 'saved' : ''} hover-glow`}
-          onClick={handleSave}
-        >
-          {isSaved ? 'Context Loaded ✓' : 'Load Context'}
-        </button>
+        <div className="tracker-container">
+          {quizStats.map((stat) => {
+            const accuracy = stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : 0;
+            return (
+              <div key={stat.chapter} className="chapter-stat">
+                <div className="stat-header">
+                  <span className="chapter-name">Chapter {stat.chapter}</span>
+                  <span className="accuracy-text">{stat.total > 0 ? `${accuracy}%` : '-'}</span>
+                </div>
+                <div className="progress-bar-bg">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${stat.total > 0 ? accuracy : 0}%`,
+                      backgroundColor: accuracy > 80 ? '#10b981' : accuracy > 50 ? '#f59e0b' : '#ef4444'
+                    }}
+                  ></div>
+                </div>
+                <div className="stat-details">
+                  {stat.correct} / {stat.total} correct
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="sidebar-footer">

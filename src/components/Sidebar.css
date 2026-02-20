@@ -62,41 +62,81 @@
     line-height: 1.5;
 }
 
-.data-input {
-    flex: 1;
+.tracker-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Scrollbar styling for the tracker container */
+.tracker-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tracker-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tracker-container::-webkit-scrollbar-thumb {
+    background: var(--glass-border);
+    border-radius: 4px;
+}
+
+.chapter-stat {
     background: var(--bg-tertiary);
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    padding: 1rem;
-    color: var(--text-primary);
-    font-family: inherit;
-    font-size: 0.95rem;
-    resize: none;
-    transition: all var(--transition-fast);
-    line-height: 1.5;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: transform var(--transition-fast);
 }
 
-.data-input:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    background: white;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+.chapter-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
-.save-btn {
-    background: var(--accent-gradient);
-    color: white;
-    border: none;
-    border-radius: var(--radius-md);
-    padding: 0.875rem;
+.stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chapter-name {
+    font-size: 0.9rem;
     font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all var(--transition-normal);
+    color: var(--text-primary);
 }
 
-.save-btn.saved {
-    background: linear-gradient(135deg, #10b981, #059669);
+.accuracy-text {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: rgba(0, 0, 0, 0.05);
+    /* or slightly darker for dark mode */
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease-out, background-color 0.3s;
+}
+
+.stat-details {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-align: right;
 }
 
 .sidebar-footer {
