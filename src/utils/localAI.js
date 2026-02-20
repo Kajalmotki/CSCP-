@@ -75,7 +75,7 @@ const isChapterInquiry = (query) => {
 
 const isChapterQuizSelect = (query) => {
     const norm = normalize(query);
-    return /chapter.*quiz|quiz.*chapter|^chapter\s\d$/.test(norm);
+    return /chapter.*quiz|quiz.*chapter|^chapter\s\d|all chapter/.test(norm);
 };
 
 export const generateQuizQuestion = (type, flashcardProgress = {}, chapterFilter = null) => {
@@ -239,12 +239,16 @@ export const generateLocalResponse = (query, additionalContext = '', flashcardPr
     if (isChapterQuizSelect(query)) {
         if (chapterNum && chapterNum >= 1 && chapterNum <= 8) {
             return generateQuizQuestion('mcq', flashcardProgress, chapterNum);
+        } else if (norm.includes('all chapter') || norm.includes('all topic')) {
+            // Direct launch into an all-chapter quiz
+            return generateQuizQuestion('mcq', flashcardProgress);
         } else {
-            // Give them a grid of 8 buttons
+            // Give them a grid of 8 buttons + All
             const chapterOptions = Array.from({ length: 8 }, (_, i) => ({
                 letter: `${i + 1}`,
                 term: `Chapter ${i + 1}`
             }));
+            chapterOptions.push({ letter: '♾️', term: 'All Chapters' });
 
             return {
                 text: `📚 **Chapter Selection**\n\nWhich chapter would you like to build a quiz from?`,
