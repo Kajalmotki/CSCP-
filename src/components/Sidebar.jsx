@@ -5,9 +5,17 @@ const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick
   return (
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
-        <div className="logo flex-center">
-          <span className="logo-icon">📈</span>
-        </div>
+        <button
+          className="logo flex-center"
+          onClick={() => window.location.reload()}
+          title="Refresh App"
+          style={{ cursor: 'pointer', color: 'var(--text-primary)' }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
         <h1 className="sidebar-title text-gradient">Your Progress</h1>
         <button className="close-sidebar" onClick={onClose}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
