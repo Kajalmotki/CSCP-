@@ -17,6 +17,15 @@
     justify-content: flex-end;
     /* Pin messages to bottom when few, expand normally */
     gap: 1.5rem;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+}
+
+.messages-container::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari and Opera */
 }
 
 .message-wrapper {
