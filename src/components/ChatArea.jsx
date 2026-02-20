@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { generateLocalResponse } from '../utils/localAI';
+import { generateLocalResponse, evaluateQuizAnswer, generateQuizQuestion } from '../utils/localAI';
 import './ChatArea.css';
 
 const ChatArea = ({ cscpContext }) => {
@@ -7,11 +7,12 @@ const ChatArea = ({ cscpContext }) => {
         {
             id: 1,
             role: 'ai',
-            text: "👋 Hello! I'm your CSCP Exam Prep AI — fully offline, no internet needed!\n\n📚 I have 45 Module 1 flashcard terms permanently loaded.\n\nTry asking:\n• **\"What is Keiretsu?\"**\n• **\"Define demand management\"**\n• **\"Quiz me\"**\n• **\"List all topics\"**",
+            text: "👋 Hello! I'm your CSCP Exam Prep AI — fully offline, no internet needed!\n\n📚 I have 462 flashcard terms permanently loaded.\n\nTry asking:\n• **\"What is Keiretsu?\"**\n• **\"Ask me any flashcard\"** (Guess the term)\n• **\"Start a quiz\"** (Multiple choice)\n• **\"List all topics\"**",
         }
     ]);
     const [inputVal, setInputVal] = useState('');
     const [isTyping, setIsTyping] = useState(false);
+    const [quizState, setQuizState] = useState(null); // Tracks active quiz
     const messagesEndRef = useRef(null);
 
     const scrollToBottom = () => {
@@ -26,14 +27,42 @@ const ChatArea = ({ cscpContext }) => {
         e.preventDefault();
         if (!inputVal.trim()) return;
 
-        const userMessage = { id: Date.now(), role: 'user', text: inputVal.trim() };
+        const userText = inputVal.trim();
+        const userMessage = { id: Date.now(), role: 'user', text: userText };
         setMessages((prev) => [...prev, userMessage]);
         setInputVal('');
         setIsTyping(true);
 
-        // Small delay to simulate "thinking"
         setTimeout(() => {
-            const responseText = generateLocalResponse(userMessage.text, cscpContext);
+            let nextState = quizState;
+            let responseText = '';
+
+            // If a quiz is active, evaluate the answer
+            if (quizState?.active) {
+                const evalResult = evaluateQuizAnswer(userText, quizState);
+                responseText = evalResult.text;
+
+                if (evalResult.newState === 'continue') {
+                    // Generate the next question immediately after providing the answer feedback
+                    const nextQ = generateQuizQuestion(quizState.type);
+                    responseText += '\n\n---\n\n' + nextQ.text;
+                    nextState = nextQ.state;
+                } else {
+                    nextState = evalResult.newState;
+                }
+            } else {
+                // Standard flow or start a new quiz
+                const result = generateLocalResponse(userText, cscpContext);
+
+                if (typeof result === 'object' && result !== null) {
+                    responseText = result.text;
+                    nextState = result.state;
+                } else {
+                    responseText = result;
+                }
+            }
+
+            setQuizState(nextState);
             const aiMessage = { id: Date.now() + 1, role: 'ai', text: responseText };
             setMessages((prev) => [...prev, aiMessage]);
             setIsTyping(false);
@@ -87,7 +116,7 @@ const ChatArea = ({ cscpContext }) => {
                         className="chat-input"
                         value={inputVal}
                         onChange={(e) => setInputVal(e.target.value)}
-                        placeholder="Ask about CSCP terms, quiz me, or list topics..."
+                        placeholder={quizState?.active ? `Type your answer or "stop" to exit quiz...` : "Ask about CSCP terms, quiz me, or list topics..."}
                     />
                     <button type="submit" className="send-btn hover-glow" disabled={!inputVal.trim()}>
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -102,3 +131,4 @@ const ChatArea = ({ cscpContext }) => {
 };
 
 export default ChatArea;
+
