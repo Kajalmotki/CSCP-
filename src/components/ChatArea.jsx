@@ -8,7 +8,13 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
         {
             id: 1,
             role: 'ai',
-            text: "👋 Hello! I'm your CSCP Exam Prep AI — fully offline, no internet needed!\n\n📚 I have 462 flashcard terms permanently loaded.\n\nTry asking:\n• **\"What is Keiretsu?\"**\n• **\"Ask me any flashcard\"** (Guess the term)\n• **\"Start a quiz\"** (Multiple choice)\n• **\"List all topics\"**",
+            text: "👋 Hello! I'm your CSCP Exam Prep AI — fully offline, no internet needed!\n\n📚 I have 462 flashcard terms permanently loaded.\n\nWhat would you like to do?",
+            options: [
+                { letter: '❓', term: 'What is Keiretsu?' },
+                { letter: '🎲', term: 'Ask me any flashcard' },
+                { letter: '📋', term: 'Start a quiz' },
+                { letter: '📑', term: 'List all topics' }
+            ]
         }
     ]);
     const [inputVal, setInputVal] = useState('');

@@ -206,7 +206,16 @@ export const generateLocalResponse = (query, additionalContext = '', flashcardPr
 
     // Handle greetings
     if (/^(hi|hey|hello|howdy|good morning|good evening)[\s!.]*$/.test(norm)) {
-        return "👋 Hello! I'm your CSCP Exam Prep AI. I have " + CSCP_PERMANENT_KNOWLEDGE.length + " flashcard terms loaded from all 8 Modules.\n\nTry asking me to:\n• **Define a term** (e.g., \"What is Keiretsu?\")\n• **Ask me any flashcard** (Open-ended guess)\n• **Start a quiz** (Multiple choice)\n• **List all topics**";
+        return {
+            text: "👋 Hello! I'm your CSCP Exam Prep AI. I have " + CSCP_PERMANENT_KNOWLEDGE.length + " flashcard terms loaded from all 8 Modules.\n\nWhat would you like to do?",
+            options: [
+                { letter: '❓', term: 'What is Keiretsu?' },
+                { letter: '🎲', term: 'Ask me any flashcard' },
+                { letter: '📋', term: 'Start a quiz' },
+                { letter: '📑', term: 'List all topics' }
+            ],
+            state: null
+        };
     }
 
     // Handle Chapter inquiries ("how many flashcards in Chapter 2")
