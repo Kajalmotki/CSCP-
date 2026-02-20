@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Sidebar.css';
 
 const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick, onReset, theme, toggleTheme }) => {
+  const [isProgressOpen, setIsProgressOpen] = useState(false);
+
   return (
     <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-header">
@@ -72,39 +74,60 @@ const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick
           </div>
         )}
 
-        <div className="info-box">
-          <p>Track your accuracy across all 8 CSCP modules. Click for details.</p>
-        </div>
+        <button
+          className="progress-accordion-toggle hover-glow"
+          onClick={() => setIsProgressOpen(!isProgressOpen)}
+        >
+          <div className="flex-center" style={{ gap: '0.6rem' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            <span>Chapter Progress</span>
+          </div>
+          <svg
+            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: isProgressOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s ease' }}
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
 
-        <div className="tracker-container">
-          {quizStats.map((stat) => {
-            const accuracy = stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : 0;
-            return (
-              <div
-                key={stat.chapter}
-                className="chapter-stat clickable"
-                onClick={() => onChapterClick?.(stat.chapter)}
-              >
-                <div className="stat-header">
-                  <span className="chapter-name">Chapter {stat.chapter}</span>
-                  <span className="accuracy-text">{stat.total > 0 ? `${accuracy}%` : '-'}</span>
+        {isProgressOpen && (
+          <div className="tracker-container slide-down">
+            <div className="info-box">
+              <p>Track your accuracy across all 8 CSCP modules. Click for details.</p>
+            </div>
+            {quizStats.map((stat) => {
+              const accuracy = stat.total > 0 ? Math.round((stat.correct / stat.total) * 100) : 0;
+              return (
+                <div
+                  key={stat.chapter}
+                  className="chapter-stat clickable"
+                  onClick={() => onChapterClick?.(stat.chapter)}
+                >
+                  <div className="stat-header">
+                    <span className="chapter-name">Chapter {stat.chapter}</span>
+                    <span className="accuracy-text">{stat.total > 0 ? `${accuracy}%` : '-'}</span>
+                  </div>
+                  <div className="progress-bar-bg">
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${stat.total > 0 ? accuracy : 0}%`,
+                        backgroundColor: accuracy > 80 ? '#10b981' : accuracy > 50 ? '#f59e0b' : '#ef4444'
+                      }}
+                    ></div>
+                  </div>
+                  <div className="stat-details">
+                    {stat.correct} / {stat.total} correct
+                  </div>
                 </div>
-                <div className="progress-bar-bg">
-                  <div
-                    className="progress-fill"
-                    style={{
-                      width: `${stat.total > 0 ? accuracy : 0}%`,
-                      backgroundColor: accuracy > 80 ? '#10b981' : accuracy > 50 ? '#f59e0b' : '#ef4444'
-                    }}
-                  ></div>
-                </div>
-                <div className="stat-details">
-                  {stat.correct} / {stat.total} correct
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="sidebar-footer">
