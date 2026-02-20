@@ -174,7 +174,7 @@ export const evaluateQuizAnswer = (query, quizState) => {
 
     if (quizState.type === 'guess') {
         isCorrect = (normUser === normCorrect);
-    } else if (quizState.type === 'mcq') {
+    } else if (quizState.options && Array.isArray(quizState.options)) {
         const normLetter = quizState.correctLetter.toLowerCase();
 
         // Check if user replied with just a letter
