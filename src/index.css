@@ -54,7 +54,9 @@
 
 body {
   font-family: 'Outfit', sans-serif;
+  background: radial-gradient(circle at top right, #e0e7ff 0%, #f8fafc 50%), radial-gradient(circle at bottom left, #f3e8ff 0%, #f8fafc 50%);
   background-color: var(--bg-primary);
+  background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

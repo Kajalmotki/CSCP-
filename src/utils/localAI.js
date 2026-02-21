@@ -8,7 +8,7 @@ const scoreItem = (item, query) => {
     const normQuery = normalize(query);
     const normTerm = normalize(item.term);
     const normDef = normalize(item.definition);
-    const queryWords = normQuery.split(/\s+/).filter(w => w.length > 2);
+    const queryWords = normQuery.split(/\s+/).filter(w => w.length >= 2);
 
     let score = 0;
 
@@ -18,6 +18,8 @@ const scoreItem = (item, query) => {
     if (normTerm.includes(normQuery)) score += 50;
     // Query contains the term
     if (normQuery.includes(normTerm)) score += 40;
+    // Definition contains exact query
+    if (normDef.includes(normQuery)) score += 30;
 
     // Word match in term
     queryWords.forEach(word => {
@@ -44,7 +46,7 @@ const findMatches = (query, topN = 3) => {
 // Detect intent
 const isListQuestion = (query) => {
     const norm = normalize(query);
-    return /list|show|all|what are|give me|examples|types of|topics/.test(norm);
+    return /list|show|all|what are|give me|examples|types of|topics|read/.test(norm);
 };
 
 const isDefinitionQuestion = (query) => {
@@ -220,6 +222,19 @@ export const generateLocalResponse = (query, additionalContext = '', flashcardPr
 
     // Handle Chapter inquiries ("how many flashcards in Chapter 2")
     const chapterNum = extractChapterNumber(query);
+    const isListReq = isListQuestion(query);
+
+    // If they explicitly ask to list/read chapter topics
+    if (isListReq && chapterNum && chapterNum >= 1 && chapterNum <= 8) {
+        const totalItems = CSCP_PERMANENT_KNOWLEDGE.length;
+        const chapterItems = CSCP_PERMANENT_KNOWLEDGE.filter((_, i) => Math.floor((i / totalItems) * 8) + 1 === chapterNum);
+
+        return {
+            text: `📚 **Chapter ${chapterNum} Flashcards**\n\nHere are the **${chapterItems.length}** terms from Chapter ${chapterNum}. Click on any term to reveal its definition.`,
+            flashcards: chapterItems,
+            state: null
+        };
+    }
 
     if (isChapterInquiry(query) && chapterNum) {
         const totalItems = CSCP_PERMANENT_KNOWLEDGE.length;
@@ -269,7 +284,7 @@ export const generateLocalResponse = (query, additionalContext = '', flashcardPr
     }
 
     // Standard Search Flow
-    const matches = findMatches(query, 3);
+    const matches = findMatches(query, 10);
 
     if (matches.length === 0) {
         return `❓ I couldn't find a match for **"${query}"** in my CSCP knowledge base.\n\nType **"list all topics"** to see everything I know, or try starting a quiz!`;

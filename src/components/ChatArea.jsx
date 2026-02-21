@@ -3,6 +3,25 @@ import { generateLocalResponse, evaluateQuizAnswer, generateQuizQuestion } from 
 import { playSound, triggerHaptic } from '../utils/haptics';
 import './ChatArea.css';
 
+const FlashcardItem = ({ term, definition }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div className={`flashcard-item ${isOpen ? 'open' : ''} glass-panel`}>
+            <div className="flashcard-header" onClick={() => {
+                setIsOpen(!isOpen);
+                triggerHaptic('light');
+            }}>
+                <span className="flashcard-term">{term}</span>
+                <span className="flashcard-icon">▼</span>
+            </div>
+            <div className="flashcard-body">
+                <div className="flashcard-def">{definition}</div>
+            </div>
+        </div>
+    );
+};
+
 const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashcardProgress, onFlashcardReview }) => {
     const [messages, setMessages] = useState([
         {
@@ -30,6 +49,23 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
         scrollToBottom();
     }, [messages, isTyping]);
 
+    // Expose a custom event for triggering chat externally
+    useEffect(() => {
+        const handleExternalChat = (e) => {
+            if (e.detail && typeof e.detail === 'string') {
+                setInputVal(e.detail);
+                // Trigger form submission after state updates
+                setTimeout(() => {
+                    const form = document.querySelector('.input-form');
+                    if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                }, 50);
+            }
+        };
+
+        window.addEventListener('triggerChat', handleExternalChat);
+        return () => window.removeEventListener('triggerChat', handleExternalChat);
+    }, []);
+
     const handleSend = (e) => {
         e.preventDefault();
         if (!inputVal.trim()) return;
@@ -46,6 +82,7 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
             let nextState = quizState;
             let responseText = '';
             let responseOptions = null;
+            let responseFlashcards = null;
 
             // If a quiz is active, evaluate the answer
             if (quizState?.active) {
@@ -86,13 +123,20 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
                     responseText = result.text;
                     responseOptions = result.options;
                     nextState = result.state;
+                    responseFlashcards = result.flashcards || null;
                 } else {
                     responseText = result;
                 }
             }
 
             setQuizState(nextState);
-            const aiMessage = { id: Date.now() + 1, role: 'ai', text: responseText, options: responseOptions };
+            const aiMessage = {
+                id: Date.now() + 1,
+                role: 'ai',
+                text: responseText,
+                options: responseOptions,
+                flashcards: responseFlashcards
+            };
             setMessages((prev) => [...prev, aiMessage]);
             setIsTyping(false);
         }, 400);
@@ -139,6 +183,14 @@ const ChatArea = ({ cscpContext, permanentKnowledge, onQuizResult, addXP, flashc
                         <div key={msg.id} className={`message-wrapper ${msg.role}`}>
                             <div className={`message-bubble ${msg.role === 'ai' ? 'glass-panel' : ''}`}>
                                 {msg.role === 'ai' ? renderText(msg.text) : msg.text}
+
+                                {msg.flashcards && msg.flashcards.length > 0 && (
+                                    <div className="flashcard-list">
+                                        {msg.flashcards.map((fc, i) => (
+                                            <FlashcardItem key={i} term={fc.term} definition={fc.definition} />
+                                        ))}
+                                    </div>
+                                )}
 
                                 {showOptions && (
                                     <div className="quiz-options-grid">

@@ -5,7 +5,9 @@
     flex-direction: column;
     padding: 1.25rem 1rem;
     border-right: 1px solid var(--glass-border);
-    background: var(--bg-secondary);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     z-index: 30;
     transition: transform var(--transition-normal);
     flex-shrink: 0;
@@ -241,7 +243,26 @@
 .stat-details {
     font-size: 0.75rem;
     color: var(--text-secondary);
-    text-align: right;
+}
+
+.read-flashcards-btn {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.read-flashcards-btn:hover {
+    background: var(--accent-gradient);
+    color: white;
+    border-color: transparent;
 }
 
 .sidebar-footer {

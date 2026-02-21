@@ -120,8 +120,25 @@ const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick
                       }}
                     ></div>
                   </div>
-                  <div className="stat-details">
-                    {stat.correct} / {stat.total} correct
+                  <div className="stat-details" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                    <span>{stat.correct} / {stat.total} correct</span>
+                    <button
+                      className="read-flashcards-btn hover-glow"
+                      title={`Read Chapter ${stat.chapter} Flashcards`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.dispatchEvent(new CustomEvent('triggerChat', { detail: `read chapter ${stat.chapter} topics` }));
+                        if (window.innerWidth <= 768 && typeof onClose === 'function') {
+                          onClose(); // Auto-close sidebar on mobile
+                        }
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                      </svg>
+                      Read
+                    </button>
                   </div>
                 </div>
               );
