@@ -72,10 +72,71 @@ function searchChunks(question, chunksAll, topN = 5) {
 }
 
 /**
+ * Helper to detect if the query is a Multiple Choice Question (MCQ)
+ * Matches patterns like "A)", "a.", "1.", "Option A"
+ */
+function parseMCQ(question) {
+    const lines = question.split('\n').map(l => l.trim()).filter(Boolean);
+    const options = [];
+    let stem = "";
+
+    // Regex for: A) A. (A) 1) 1. Option A:
+    const optRegex = /^([A-Ea-e1-5][\.\)]|\([A-Ea-e1-5]\)|Option\s+[A-Ea-e])\s+(.*)/i;
+
+    for (const line of lines) {
+        const match = line.match(optRegex);
+        if (match) {
+            options.push({ label: match[1], text: match[2].trim() });
+        } else {
+            stem += line + " ";
+        }
+    }
+
+    if (options.length >= 2) {
+        return { isMCQ: true, stem: stem.trim(), options };
+    }
+
+    // Sometimes people just paste them inline: "What is X? a) foo b) bar c) baz"
+    const inlineSplit = question.split(/(?=\b[A-Da-d]\)|\b[A-Da-d]\.)/);
+    if (inlineSplit.length >= 3) {
+        return {
+            isMCQ: true,
+            stem: inlineSplit[0].trim(),
+            options: inlineSplit.slice(1).map(opt => {
+                const letter = opt.substring(0, 2);
+                const text = opt.substring(2).trim();
+                return { label: letter, text: text };
+            })
+        };
+    }
+
+    return { isMCQ: false };
+}
+
+/**
+ * Score a specific MCQ option against a chunk
+ */
+function scoreOption(optionText, chunkText) {
+    const optWords = new Set(optionText.toLowerCase().match(/\b\w{3,}\b/g) || []);
+    const cWords = new Set(chunkText.toLowerCase().match(/\b\w{3,}\b/g) || []);
+    let score = 0;
+
+    // Check word overlap
+    for (const w of optWords) { if (!STOP_WORDS.has(w) && cWords.has(w)) score += 3; }
+
+    // Check exact phrase exact inclusion
+    if (optionText.length > 5 && chunkText.toLowerCase().includes(optionText.toLowerCase())) {
+        score += 20;
+    }
+
+    return score;
+}
+
+/**
  * Generate a professional structured answer from retrieved chunks entirely in-browser
  */
 export async function generateLocalAnswer(question) {
-    // 1. Fetch the static knowledge JSON (generated from EPUBs)
+    // 1. Fetch the static knowledge JSON
     let knowledgeChunks = [];
     try {
         const res = await fetch('/ai_knowledge.json');
@@ -88,7 +149,70 @@ export async function generateLocalAnswer(question) {
         throw new Error('Connection error. Could not load AI Knowledge Base over network.');
     }
 
-    // 2. Search relevant chunks
+    const { isMCQ, stem, options } = parseMCQ(question);
+
+    // ── MCQ SOLVING LOGIC ──
+    if (isMCQ) {
+        // Search chunks based on the question stem
+        const relevantChunks = searchChunks(stem || question, knowledgeChunks, 15);
+
+        let bestOption = null;
+        let highestScore = -1;
+        let bestJustification = "";
+        let bestSource = "";
+
+        // Evaluate each option against the top context chunks
+        for (const opt of options) {
+            let optScore = 0;
+            let optJustification = "";
+            let chunkSource = "";
+
+            for (const chunk of relevantChunks) {
+                const matchScore = scoreOption(opt.text, chunk.t);
+                if (matchScore > optScore) {
+                    optScore = matchScore;
+                    optJustification = chunk.t;
+                    chunkSource = `Module ${chunk.m}`;
+                }
+            }
+
+            if (optScore > highestScore) {
+                highestScore = optScore;
+                bestOption = opt;
+                bestJustification = optJustification;
+                bestSource = chunkSource;
+            }
+        }
+
+        if (bestOption && highestScore > 0) {
+            // Find the precise sentence in the chunk that justifies it
+            const sentences = bestJustification.split(/(?<=[.!?])\s+/);
+            const justificationSentences = sentences.filter(s =>
+                scoreOption(bestOption.text, s) > 0 || scoreOption(stem, s) > 0
+            ).slice(0, 2).join(' ');
+
+            let response = `🎯 **Recommended Answer: ${bestOption.label} ${bestOption.text}**\n\n`;
+            response += `**Why? (Based on CSCP Text)**\n`;
+            response += `> *"${justificationSentences || bestJustification.substring(0, 250) + '...'}"*\n\n`;
+
+            return {
+                answer: response.trim(),
+                sources: [bestSource]
+            };
+        } else {
+            // Fallback if we can't definitively score it
+            let response = `🤔 **I analyzed this MCQ, but couldn't find a definitive match in the CSCP materials.**\n\n`;
+            response += `**Relevant Context Found:**\n`;
+            if (relevantChunks.length > 0) {
+                response += `> *"${relevantChunks[0].t.substring(0, 300)}..."*\n`;
+            }
+            return { answer: response.trim(), sources: relevantChunks.slice(0, 2).map(c => `Module ${c.m}`) };
+        }
+    }
+
+
+    // ── STANDARD QUESTION LOGIC ──
+
     const relevantChunks = searchChunks(question, knowledgeChunks, 8);
 
     // Fallback if nothing found
@@ -102,7 +226,7 @@ export async function generateLocalAnswer(question) {
     const intent = detectQueryIntent(question);
     const qWords = extractKeywords(question);
 
-    // Extract the most relevant sentences from top chunks
+    // Extract the most relevant sentences
     const extractSentences = (text, maxSentences = 3) => {
         const sents = text
             .replace(/(\w)\.\s+([A-Z])/g, '$1.\n$2')
@@ -118,86 +242,58 @@ export async function generateLocalAnswer(question) {
         return scoredSents.slice(0, maxSentences).map(s => s.text);
     };
 
-    // Collect best insights from top 5 chunks
     const insights = [];
     for (const c of relevantChunks.slice(0, 5)) {
         const sents = extractSentences(c.t, 2);
         insights.push(...sents);
     }
-    const uniqueInsights = [...new Map(insights.map(s => [s.substring(0, 30), s])).values()].slice(0, 5);
+    const uniqueInsights = [...new Map(insights.map(s => [s.substring(0, 30), s])).values()].slice(0, 4);
 
-    // ── Build response based on intent ──────────────────────────────────────
     let response = '';
 
     const INTENT_HEADERS = {
-        supplier_crisis: '**Immediate Actions for Supplier Crisis**',
-        inventory_excess: '**Managing Excess Inventory**',
-        shortage: '**Addressing Supply Shortage**',
-        demand_surge: '**Responding to Demand Surge**',
-        forecast: '**Improving Forecast Accuracy**',
-        supplier: '**Supplier Management Strategy**',
-        logistics: '**Logistics & Transportation Guidance**',
-        quality: '**Quality Issue Response Plan**',
-        cost: '**Cost Reduction Strategies**',
-        lean: '**Lean & Efficiency Improvement**',
-        risk: '**Supply Chain Risk Management**',
-        planning: '**Supply Chain Planning Framework**',
-        definition: '**CSCP Knowledge Base Answer**',
-        general: '**Supply Chain Expert Guidance**',
+        supplier_crisis: '🚨 **Supplier Crisis Response Strategy**',
+        inventory_excess: '📦 **Excess Inventory Management**',
+        shortage: '📉 **Supply Shortage Mitigation**',
+        demand_surge: '📈 **Demand Surge Action Plan**',
+        forecast: '🎯 **Forecast Accuracy Strategy**',
+        supplier: '🤝 **Supplier Management & Alignment**',
+        logistics: '🚛 **Logistics & Distribution Strategy**',
+        quality: '🛑 **Quality Management & Control**',
+        cost: '💰 **Total Cost & Optimization**',
+        lean: '⚡ **Lean Operations Strategy**',
+        risk: '🛡️ **Supply Chain Risk Management**',
+        planning: '📅 **S&OP and Planning Workflow**',
+        definition: '📖 **CSCP Professional Definition**',
+        general: '⚙️ **Supply Chain Expert Guidance**',
     };
 
     const INTENT_STEPS = {
         supplier_crisis: [
-            '🚨 **Immediate (0–48 hrs):** Activate your Business Continuity Plan and notify your procurement and operations teams. Identify all affected material flows.',
-            '🔍 **Assess Exposure:** Calculate the inventory buffer you have and how many production days you can sustain without this supplier.',
-            '📞 **Activate Backup Suppliers:** Contact qualified alternates immediately. Issue emergency purchase orders and expedite qualification if needed.',
-            '📦 **Inventory Actions:** Prioritize available stock for highest-value customer orders. Consider consignment or spot-market sourcing.',
-            '📋 **Medium Term:** Implement dual-sourcing policy. Increase safety stock for critical single-source components.',
+            '**1. Immediate Containment:** Assess the buffer inventory currently on-hand and in-transit. Determine the exact "run-out" date for production.',
+            '**2. Urgent Sourcing:** Immediately issue spot-buy POs to secondary or alternative suppliers, even at a premium.',
+            '**3. Demand Shaping:** Work with Sales/Marketing to steer customers toward alternative products that do not rely on the constrained components.',
         ],
         inventory_excess: [
-            '📊 **Root Cause First:** Run an ABC-XYZ analysis to identify which SKUs are truly excess vs. slow-moving.',
-            '💰 **Liquidation Options:** Consider markdowns, return-to-vendor agreements, secondary market channels, or donation for tax benefit.',
-            '🔄 **Demand Stimulation:** Work with sales on promotions, bundle deals, or early-pay incentives to move excess stock.',
-            '📉 **Prevent Recurrence:** Revise forecast models, tighten reorder points, and implement S&OP review for repeat offenders.',
+            '**1. Categorize & Identify Root Cause:** Segment the excess into Obsolete, Slow-Moving, and Overstock. Was the cause a bad forecast, a canceled order, or a delayed shipment?',
+            '**2. Liquidation Strategy:** Evaluate return-to-vendor (RTV) policies, secondary market sales, or bundling with high-velocity items.',
+            '**3. Process Change:** Adjust reorder points and safety stock levels. Implement stricter S&OP reviews to detect mismatches earlier.',
         ],
         shortage: [
-            '⚡ **Emergency Sourcing:** Contact all approved alternates immediately. Authorize spot buys within defined thresholds.',
-            '🎯 **Allocate Strategically:** Prioritize available supply to highest-margin, highest-commitment orders first.',
-            '📣 **Customer Communication:** Proactively notify affected customers with revised delivery dates and mitigation offers.',
-            '🔄 **Recovery Plan:** Run expedited shipments where cost-justified. Consider partial shipments to maintain customer confidence.',
+            '**1. Strategic Allocation:** Prioritize available inventory for A-tier customers or highest margin products to protect core revenue.',
+            '**2. Expediting:** Authorize premium freight (air vs ocean) if the cost of the stockout exceeds the transportation premium.',
+            '**3. Communication:** Transparently notify affected downstream partners and customers with revised ETAs.',
         ],
         demand_surge: [
-            '📈 **Validate First:** Confirm whether the surge is real demand or a bullwhip effect from over-ordering downstream.',
-            '🏭 **Capacity Response:** Review overtime, shift extensions, and contract manufacturing options.',
-            '🚚 **Prioritized Fulfillment:** Rank orders by strategic value and commitment levels for fair allocation.',
-            '📊 **Update Forecasts:** Feed actual demand into your ERP/planning system and revise the S&OP cycle immediately.',
-        ],
-        forecast: [
-            '📐 **Check Bias First:** Calculate Mean Absolute Percentage Error (MAPE) and identify systematic over/under-forecasting.',
-            '📅 **Incorporate More Signals:** Add leading indicators — POS data, customer order backlog, market intelligence.',
-            '🤝 **Collaborative Forecasting:** Engage key customers in a CPFR (Collaborative Planning, Forecasting & Replenishment) process.',
-            '🔁 **Review Cycle:** Move to a rolling 13-month forecast with weekly or bi-weekly S&OP touchpoints.',
+            '**1. Validate the Signal:** Determine if the surge is real end-user demand or artificial "phantom" ordering caused by the bullwhip effect.',
+            '**2. Capacity Triage:** Maximize current throughput via overtime. Explore third-party contract manufacturers if the surge is sustained.',
+            '**3. Allocation Strategy:** Place customers on "fair-share" allocation based on historical volume rather than fulfilling giant new orders completely.',
         ],
         planning: [
-            '📋 **Meeting Agenda — Supply Chain Planning Session**',
-            '1️⃣ **Review & Metrics:** KPIs — fill rate, on-time delivery, inventory turns, forecast accuracy',
-            '2️⃣ **Demand Review:** Latest forecasts, customer intelligence, market changes',
-            '3️⃣ **Supply Review:** Supplier capacity, constraints, risk items',
-            '4️⃣ **Issue Resolution:** Open action items, escalations',
-            '5️⃣ **S&OP Alignment:** Confirm production plan aligns to demand signal',
-        ],
-        quality: [
-            '🛑 **Stop & Contain:** Immediately quarantine affected inventory. Issue Hold notices across all distribution centers.',
-            '🔎 **Root Cause Analysis:** Use 5-Why or Ishikawa diagram to trace the defect source.',
-            '📣 **Customer Notification:** Follow your quality alert protocol. Be proactive and transparent.',
-            '📝 **CAPA:** Document a Corrective and Preventive Action plan. Set measurable success criteria.',
-        ],
-        cost: [
-            '📊 **Benchmark:** Start with total cost of ownership (TCO) analysis across all key supply chain nodes.',
-            '🤝 **Supplier Negotiation:** Leverage volume consolidation, longer-term contracts, or early payment terms for better pricing.',
-            '🚚 **Logistics Optimization:** Consolidate shipments, optimize routing, and evaluate carrier mix vs. rail/sea modes.',
-            '📦 **Inventory Carrying Costs:** Reduce safety stock where demand is highly predictable. Implement VMI with key suppliers.',
-        ],
+            '**1. Demand Review:** Consolidate statistical forecasts with promotional and sales intelligence.',
+            '**2. Supply Review:** Identify capacity constraints, material shortages, and labor gaps over the planning horizon.',
+            '**3. S&OP Alignment:** Executive leadership must sign off on a single, synchronized operating plan that balances supply capability with demand generation.',
+        ]
     };
 
     const header = INTENT_HEADERS[intent] || INTENT_HEADERS.general;
@@ -206,29 +302,16 @@ export async function generateLocalAnswer(question) {
     response += `${header}\n\n`;
 
     if (steps) {
-        response += steps.join('\n') + '\n\n';
+        response += steps.join('\n\n') + '\n\n';
     }
 
-    // Add relevant CSCP knowledge from EPUB chunks
+    // Add relevant CSCP knowledge directly mapped from EPUB text
     if (uniqueInsights.length > 0) {
         response += `📚 **From CSCP Knowledge Base:**\n\n`;
         uniqueInsights.forEach(insight => {
             response += `• ${insight}\n`;
         });
-        response += '\n';
     }
-
-    // Add a closing best-practice note
-    const closings = {
-        supplier_crisis: '> **Key Principle (CSCP):** Supply resilience is built before a crisis, not during one. Use this event to build a supply risk registry and dual-source critical items.',
-        inventory_excess: '> **Key Principle (CSCP):** Excess inventory is a symptom of a demand-supply mismatch. The fix is upstream in planning, not downstream in liquidation.',
-        demand_surge: '> **Key Principle (CSCP):** Demand variability amplifies through the supply chain (bullwhip effect). Real-time visibility and collaborative planning are the antidote.',
-        forecast: '> **Key Principle (CSCP):** No forecast is perfect. Design your supply chain to be agile enough to respond to forecast error, not just minimize it.',
-        planning: '> **Key Principle (CSCP):** Effective S&OP creates one unified plan across sales, operations, finance, and supply chain — breaking down functional silos.',
-        general: '> **Key Principle (CSCP):** Every supply chain decision involves trade-offs between cost, service level, and risk. Use a structured framework to evaluate options systematically.',
-    };
-
-    response += closings[intent] || closings.general;
 
     const sources = [...new Set(relevantChunks.map(c => `Module ${c.m}`))];
 
