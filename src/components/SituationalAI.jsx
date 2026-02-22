@@ -1,21 +1,17 @@
-
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './SituationalAI.css';
+import { generateLocalAnswer } from '../utils/localAIEngine';
 
-const LOCAL_API = 'http://localhost:8000/api/situational-ai';
+const SYSTEM_PROMPT = `You are Aria, a world-class supply chain expert advisor with deep expertise in ASCM CSCP frameworks, logistics, procurement, inventory management, demand planning, and global operations strategy. You are speaking with a supply chain professional facing a real-world challenge. Provide immediate, practical, actionable guidance grounded in ASCM CSCP standards. Be calm, authoritative, empathetic, and professional — like a senior consultant. Structure your response clearly with bold headers. Focus on what can be done RIGHT NOW and what to plan for the near and long term.`;
 
-// Call the local Node.js AI engine (no external API needed)
+// Call the local completely-offline AI engine using pre-generated CSCP EPUB chunks
 async function callAria(question) {
-    const res = await fetch(LOCAL_API, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question })
-    });
-    if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `Server error ${res.status} `);
+    try {
+        const result = await generateLocalAnswer(question);
+        return result; // { answer, sources }
+    } catch (err) {
+        throw new Error(err.message || 'AI Engine Error');
     }
-    return await res.json(); // { answer, sources }
 }
 
 
