@@ -641,7 +641,8 @@
     }
 
     .sai-tabs {
-        display: none;
+        transform: scale(0.9);
+        transform-origin: right center;
     }
 
     .sai-bubble {
