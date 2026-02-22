@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AscmDictionary.css';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const API_BASE = 'http://localhost:8000';
+const LOCAL_API = 'http://localhost:8000/api/dictionary';
+const STATIC_JSON = '/dictionary_data.json';
 
 const AscmDictionary = ({ isOpen, onClose }) => {
     const [entries, setEntries] = useState([]);
@@ -29,14 +30,27 @@ const AscmDictionary = ({ isOpen, onClose }) => {
         setLoading(true);
         setError(null);
         try {
-            const res = await fetch(`${API_BASE}/api/dictionary`);
-            if (!res.ok) throw new Error(`Server error: ${res.status}`);
-            const data = await res.json();
-            if (data.error) throw new Error(data.error);
+            // Try static pre-generated JSON first (works on Netlify/production)
+            let data = null;
+            try {
+                const res = await fetch(STATIC_JSON);
+                if (res.ok) {
+                    data = await res.json();
+                }
+            } catch (_) { /* static JSON not available, try local API */ }
+
+            // Fall back to local API if static JSON failed
+            if (!data || !data.entries) {
+                const res = await fetch(LOCAL_API);
+                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+                data = await res.json();
+                if (data.error) throw new Error(data.error);
+            }
+
             setEntries(data.entries || []);
         } catch (err) {
             if (err.message.includes('fetch') || err.message.includes('Failed') || err.message.includes('refused')) {
-                setError('Cannot connect to the dictionary server.\n\nPlease run: node api\\server.js');
+                setError('Cannot load the dictionary.\n\nFor local use: run node api\\server.js');
             } else {
                 setError('Failed to load dictionary: ' + err.message);
             }

@@ -1,7 +1,50 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './SituationalAI.css';
 
-const API_URL = 'http://localhost:8000/api/situational-ai';
+const LOCAL_API = 'http://localhost:8000/api/situational-ai';
+const OPENROUTER_KEY = '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';
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+const SYSTEM_PROMPT = `You are Aria, a world-class supply chain expert advisor with deep expertise in ASCM CSCP frameworks, logistics, procurement, inventory management, demand planning, and global operations strategy. You are speaking with a supply chain professional facing a real-world challenge. Provide immediate, practical, actionable guidance grounded in ASCM CSCP standards. Be calm, authoritative, empathetic, and professional — like a senior consultant. Structure your response clearly with bold headers. Focus on what can be done RIGHT NOW and what to plan for the near and long term.`;
+
+// Try local API first (has EPUB context), then fall back to direct OpenRouter
+async function callAria(question, history) {
+    // 1. Try local Node.js server
+    try {
+        const res = await fetch(LOCAL_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ question, history: history.slice(-8) }),
+            signal: AbortSignal.timeout(5000) // 5s timeout — if server not running, fail fast
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.answer) return { answer: data.answer, sources: data.sources || [] };
+        }
+    } catch (_) { /* Local server not running — use direct OpenRouter */ }
+
+    // 2. Fall back: call OpenRouter directly from browser
+    const messages = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...history.slice(-8),
+        { role: 'user', content: question }
+    ];
+    const res = await fetch(OPENROUTER_URL, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${OPENROUTER_KEY}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'CSCP Situational AI'
+        },
+        body: JSON.stringify({ model: 'openai/gpt-4o-mini', messages, max_tokens: 1024, temperature: 0.7 })
+    });
+    if (!res.ok) throw new Error(`AI API error: ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'AI error');
+    return { answer: data.choices[0].message.content, sources: [] };
+}
+
 
 const ARIA_INTRO = `Hello! I'm **Aria**, your dedicated Supply Chain AI Advisor.
 
@@ -124,21 +167,7 @@ const SituationalAI = ({ isOpen, onClose }) => {
         historyRef.current.push({ role: 'user', content: question.trim() });
 
         try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    question: question.trim(),
-                    history: historyRef.current.slice(-8)
-                })
-            });
-
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.detail || `API error ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await callAria(question.trim(), historyRef.current);
             const ariaMsg = { id: Date.now() + 1, role: 'aria', text: data.answer, sources: data.sources };
             setMessages(prev => [...prev, ariaMsg]);
             historyRef.current.push({ role: 'assistant', content: data.answer });
@@ -147,9 +176,7 @@ const SituationalAI = ({ isOpen, onClose }) => {
                 speak(data.answer);
             }
         } catch (err) {
-            const errMsg = err.message.includes('fetch') || err.message.includes('Failed')
-                ? 'Cannot connect to the Aria API. Please start the Node.js server:\n\n  Double-click: api\\start_server.bat\n\nOr run in terminal:\n  node api\\server.js'
-                : err.message;
+            const errMsg = err.message || 'Something went wrong. Please try again.';
             setApiError(errMsg);
             setMessages(prev => [...prev, { id: Date.now() + 1, role: 'aria', text: `⚠️ ${errMsg}`, isError: true }]);
         } finally {
