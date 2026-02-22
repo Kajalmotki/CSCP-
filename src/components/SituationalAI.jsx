@@ -1,48 +1,21 @@
+
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './SituationalAI.css';
 
 const LOCAL_API = 'http://localhost:8000/api/situational-ai';
-const OPENROUTER_KEY = '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';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
-const SYSTEM_PROMPT = `You are Aria, a world-class supply chain expert advisor with deep expertise in ASCM CSCP frameworks, logistics, procurement, inventory management, demand planning, and global operations strategy. You are speaking with a supply chain professional facing a real-world challenge. Provide immediate, practical, actionable guidance grounded in ASCM CSCP standards. Be calm, authoritative, empathetic, and professional — like a senior consultant. Structure your response clearly with bold headers. Focus on what can be done RIGHT NOW and what to plan for the near and long term.`;
-
-// Try local API first (has EPUB context), then fall back to direct OpenRouter
-async function callAria(question, history) {
-    // 1. Try local Node.js server
-    try {
-        const res = await fetch(LOCAL_API, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ question, history: history.slice(-8) }),
-            signal: AbortSignal.timeout(5000) // 5s timeout — if server not running, fail fast
-        });
-        if (res.ok) {
-            const data = await res.json();
-            if (data.answer) return { answer: data.answer, sources: data.sources || [] };
-        }
-    } catch (_) { /* Local server not running — use direct OpenRouter */ }
-
-    // 2. Fall back: call OpenRouter directly from browser
-    const messages = [
-        { role: 'system', content: SYSTEM_PROMPT },
-        ...history.slice(-8),
-        { role: 'user', content: question }
-    ];
-    const res = await fetch(OPENROUTER_URL, {
+// Call the local Node.js AI engine (no external API needed)
+async function callAria(question) {
+    const res = await fetch(LOCAL_API, {
         method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${OPENROUTER_KEY}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': window.location.origin,
-            'X-Title': 'CSCP Situational AI'
-        },
-        body: JSON.stringify({ model: 'openai/gpt-4o-mini', messages, max_tokens: 1024, temperature: 0.7 })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
     });
-    if (!res.ok) throw new Error(`AI API error: ${res.status}`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message || 'AI error');
-    return { answer: data.choices[0].message.content, sources: [] };
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `Server error ${res.status} `);
+    }
+    return await res.json(); // { answer, sources }
 }
 
 
@@ -50,9 +23,9 @@ const ARIA_INTRO = `Hello! I'm **Aria**, your dedicated Supply Chain AI Advisor.
 
 I'm here to help you navigate any supply chain challenge — from supplier disruptions and inventory crises to demand volatility and logistics optimization.
 
-**How can I assist you today?** You can type your situation below or tap the microphone to speak directly with me.
+    ** How can I assist you today ?** You can type your situation below or tap the microphone to speak directly with me.
 
-*Try asking:*
+* Try asking:*
 • "My key supplier just went bankrupt — what do I do?"
 • "How should I handle a sudden spike in demand?"
 • "What strategies reduce lead time variability?"`;
@@ -178,7 +151,7 @@ const SituationalAI = ({ isOpen, onClose }) => {
         } catch (err) {
             const errMsg = err.message || 'Something went wrong. Please try again.';
             setApiError(errMsg);
-            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'aria', text: `⚠️ ${errMsg}`, isError: true }]);
+            setMessages(prev => [...prev, { id: Date.now() + 1, role: 'aria', text: `⚠️ ${errMsg} `, isError: true }]);
         } finally {
             setIsLoading(false);
             if (mode === 'voice') setVoiceStatus('idle');
@@ -276,7 +249,7 @@ const SituationalAI = ({ isOpen, onClose }) => {
                     <div className="sai-avatar-wrap">
                         <div className="sai-avatar">
                             <span className="sai-avatar-emoji">🤖</span>
-                            <div className={`sai-avatar-pulse ${isSpeaking ? 'speaking' : isListening ? 'listening' : ''}`}></div>
+                            <div className={`sai - avatar - pulse ${isSpeaking ? 'speaking' : isListening ? 'listening' : ''} `}></div>
                         </div>
                         <div>
                             <h2 className="sai-name">Aria</h2>
@@ -291,10 +264,10 @@ const SituationalAI = ({ isOpen, onClose }) => {
 
                     {/* Mode Tabs */}
                     <div className="sai-tabs">
-                        <button className={`sai-tab ${mode === 'chat' ? 'active' : ''}`} onClick={() => { setMode('chat'); synthRef.current?.cancel(); }}>
+                        <button className={`sai - tab ${mode === 'chat' ? 'active' : ''} `} onClick={() => { setMode('chat'); synthRef.current?.cancel(); }}>
                             💬 Chat
                         </button>
-                        <button className={`sai-tab ${mode === 'voice' ? 'active' : ''}`} onClick={() => { setMode('voice'); }}>
+                        <button className={`sai - tab ${mode === 'voice' ? 'active' : ''} `} onClick={() => { setMode('voice'); }}>
                             🎙️ Voice
                         </button>
                     </div>
@@ -305,11 +278,11 @@ const SituationalAI = ({ isOpen, onClose }) => {
                 {/* Messages */}
                 <div className="sai-messages">
                     {messages.map((msg) => (
-                        <div key={msg.id} className={`sai-msg-wrap ${msg.role}`}>
+                        <div key={msg.id} className={`sai - msg - wrap ${msg.role} `}>
                             {msg.role === 'aria' && (
                                 <div className="sai-msg-avatar">A</div>
                             )}
-                            <div className={`sai-bubble ${msg.role} ${msg.isError ? 'error' : ''}`}>
+                            <div className={`sai - bubble ${msg.role} ${msg.isError ? 'error' : ''} `}>
                                 {msg.role === 'aria' ? renderText(msg.text) : msg.text}
                                 {msg.sources && msg.sources.length > 0 && (
                                     <div className="sai-sources">
