@@ -245,7 +245,7 @@ const SituationalAI = ({ isOpen, onClose }) => {
                     <div className="sai-avatar-wrap">
                         <div className="sai-avatar">
                             <span className="sai-avatar-emoji">🤖</span>
-                            <div className={`sai - avatar - pulse ${isSpeaking ? 'speaking' : isListening ? 'listening' : ''} `}></div>
+                            <div className={`sai-avatar-pulse ${isSpeaking ? 'speaking' : isListening ? 'listening' : ''}`}></div>
                         </div>
                         <div>
                             <h2 className="sai-name">Aria</h2>
@@ -260,10 +260,10 @@ const SituationalAI = ({ isOpen, onClose }) => {
 
                     {/* Mode Tabs */}
                     <div className="sai-tabs">
-                        <button className={`sai - tab ${mode === 'chat' ? 'active' : ''} `} onClick={() => { setMode('chat'); synthRef.current?.cancel(); }}>
+                        <button className={`sai-tab ${mode === 'chat' ? 'active' : ''}`} onClick={() => { setMode('chat'); synthRef.current?.cancel(); }}>
                             💬 Chat
                         </button>
-                        <button className={`sai - tab ${mode === 'voice' ? 'active' : ''} `} onClick={() => { setMode('voice'); }}>
+                        <button className={`sai-tab ${mode === 'voice' ? 'active' : ''}`} onClick={() => { setMode('voice'); }}>
                             🎙️ Voice
                         </button>
                     </div>
@@ -274,7 +274,7 @@ const SituationalAI = ({ isOpen, onClose }) => {
                 {/* Messages */}
                 <div className="sai-messages">
                     {messages.map((msg) => (
-                        <div key={msg.id} className={`sai - msg - wrap ${msg.role} `}>
+                        <div key={msg.id} className={`sai-msg-wrap ${msg.role}`}>
                             {msg.role === 'aria' && (
                                 <div className="sai-msg-avatar">A</div>
                             )}
