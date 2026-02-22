@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import ChapterModal from './components/ChapterModal';
+import AscmDictionary from './components/AscmDictionary';
+import SituationalAI from './components/SituationalAI';
 import { CSCP_PERMANENT_KNOWLEDGE } from './data/csc_permanent_data.js';
 import confetti from 'canvas-confetti';
 import { playSound, triggerHaptic } from './utils/haptics.js';
@@ -17,6 +19,8 @@ function App() {
   const [cscpContext, setCscpContext] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeChapter, setActiveChapter] = useState(null);
+  const [showDictionary, setShowDictionary] = useState(false);
+  const [showSituationalAI, setShowSituationalAI] = useState(false);
 
   // Persistent Quiz Stats tracking
   const [quizStats, setQuizStats] = useState(() => {
@@ -192,6 +196,8 @@ function App() {
         onReset={resetProgress}
         theme={theme}
         toggleTheme={toggleTheme}
+        onOpenDictionary={() => setShowDictionary(true)}
+        onOpenSituationalAI={() => setShowSituationalAI(true)}
       />
       <ChatArea
         cscpContext={cscpContext}
@@ -207,6 +213,16 @@ function App() {
         onClose={() => setActiveChapter(null)}
         chapter={activeChapter}
         stat={activeChapter ? quizStats.find(s => s.chapter === activeChapter) : null}
+      />
+
+      <AscmDictionary
+        isOpen={showDictionary}
+        onClose={() => setShowDictionary(false)}
+      />
+
+      <SituationalAI
+        isOpen={showSituationalAI}
+        onClose={() => setShowSituationalAI(false)}
       />
 
       {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}

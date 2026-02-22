@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Sidebar.css';
 
-const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick, onReset, theme, toggleTheme }) => {
+const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick, onReset, theme, toggleTheme, onOpenDictionary, onOpenSituationalAI }) => {
   const [isProgressOpen, setIsProgressOpen] = useState(false);
 
   return (
@@ -148,6 +148,30 @@ const Sidebar = ({ isOpen, onClose, quizStats = [], gamification, onChapterClick
       </div>
 
       <div className="sidebar-footer">
+        {/* Feature Buttons */}
+        <div className="sidebar-feature-btns">
+          <button
+            className="sidebar-feature-btn dict-btn hover-glow"
+            onClick={() => { onOpenDictionary?.(); onClose?.(); }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            ASCM Dictionary
+          </button>
+          <button
+            className="sidebar-feature-btn sai-btn hover-glow"
+            onClick={() => { onOpenSituationalAI?.(); onClose?.(); }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"></path>
+            </svg>
+            Situational AI
+          </button>
+        </div>
+
         <div className="status-badge">
           <span className="status-dot pulse"></span>
           AI Ready

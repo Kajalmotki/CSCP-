@@ -1,0 +1,658 @@
+/* =====================================================
+   SituationalAI.css — White background, black text
+   ===================================================== */
+
+.sai-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: sai-fadeIn 0.25s ease;
+}
+
+.sai-modal {
+    width: 100%;
+    max-width: 720px;
+    height: 92vh;
+    max-height: 900px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
+    animation: sai-slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Header ── */
+.sai-header {
+    padding: 1.1rem 1.4rem 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    background: #f9fafb;
+}
+
+.sai-avatar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.sai-avatar {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.sai-avatar-emoji {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: block;
+    font-size: 1.5rem;
+    line-height: 48px;
+    text-align: center;
+    flex-shrink: 0;
+    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
+}
+
+.sai-avatar-pulse {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.sai-avatar-pulse.speaking {
+    border-color: #6366f1;
+    animation: sai-pulse 1s ease-in-out infinite;
+}
+
+.sai-avatar-pulse.listening {
+    border-color: #16a34a;
+    animation: sai-pulse 0.6s ease-in-out infinite;
+}
+
+.sai-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: #111827;
+}
+
+.sai-status {
+    font-size: 0.76rem;
+    color: #6b7280;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.sai-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.sai-dot.idle {
+    background: #9ca3af;
+}
+
+.sai-dot.listening {
+    background: #16a34a;
+    animation: sai-blink 0.7s ease-in-out infinite;
+}
+
+.sai-dot.thinking {
+    background: #f59e0b;
+    animation: sai-blink 0.5s ease-in-out infinite;
+}
+
+.sai-dot.speaking {
+    background: #6366f1;
+    animation: sai-blink 0.8s ease-in-out infinite;
+}
+
+/* ── Mode Tabs ── */
+.sai-tabs {
+    display: flex;
+    gap: 4px;
+    background: #e5e7eb;
+    border-radius: 10px;
+    padding: 3px;
+    flex-shrink: 0;
+}
+
+.sai-tab {
+    padding: 0.35rem 0.8rem;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.sai-tab:hover {
+    color: #374151;
+}
+
+.sai-tab.active {
+    background: #ffffff;
+    color: #111827;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sai-close {
+    background: #f3f4f6;
+    border: none;
+    color: #6b7280;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sai-close:hover {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+/* ── Messages ── */
+.sai-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.1rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    background: #ffffff;
+}
+
+.sai-messages::-webkit-scrollbar {
+    width: 5px;
+}
+
+.sai-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sai-messages::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.sai-msg-wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.55rem;
+    animation: sai-msgIn 0.22s ease;
+}
+
+.sai-msg-wrap.user {
+    flex-direction: row-reverse;
+}
+
+.sai-msg-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.sai-bubble {
+    max-width: 80%;
+    padding: 0.85rem 1rem;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+
+.sai-bubble.aria {
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-bottom-left-radius: 4px;
+    color: #111827;
+}
+
+.sai-bubble.user {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-bottom-right-radius: 4px;
+    color: #fff;
+}
+
+.sai-bubble.error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    font-size: 0.83rem;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
+
+.sai-bubble p {
+    margin: 0;
+    color: inherit;
+}
+
+.sai-bubble strong {
+    color: #111827;
+}
+
+.sai-sources {
+    margin-top: 0.55rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.73rem;
+    color: #9ca3af;
+}
+
+/* ── Typing ── */
+.sai-typing {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.7rem 0.9rem !important;
+}
+
+.sai-typing span {
+    width: 7px;
+    height: 7px;
+    background: #9ca3af;
+    border-radius: 50%;
+    animation: sai-typingDot 1.2s ease-in-out infinite;
+    display: block;
+}
+
+.sai-typing span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.sai-typing span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+/* ── Suggestions ── */
+.sai-suggestions {
+    padding: 0 1.4rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-shrink: 0;
+    background: #fff;
+}
+
+.sai-suggestion {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 9px;
+    color: #374151;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.85rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.18s;
+    line-height: 1.4;
+}
+
+.sai-suggestion:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+/* ── Chat Input ── */
+.sai-input-area {
+    padding: 0.85rem 1.4rem 1.1rem;
+    border-top: 1px solid #e5e7eb;
+    flex-shrink: 0;
+    background: #f9fafb;
+}
+
+.sai-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.sai-input {
+    flex: 1;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    color: #111827;
+    font-size: 0.92rem;
+    padding: 0.68rem 1rem;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.sai-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.sai-input::placeholder {
+    color: #9ca3af;
+}
+
+.sai-input:disabled {
+    opacity: 0.5;
+}
+
+.sai-send {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    border: none;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+}
+
+.sai-send:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.sai-send:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* ── Voice Interface ── */
+.sai-voice-area {
+    padding: 1.1rem 1.4rem 1.3rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 0;
+    background: #f9fafb;
+}
+
+.sai-transcript {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 0.7rem 1rem;
+    color: #1d4ed8;
+    font-size: 0.87rem;
+    width: 100%;
+    min-height: 38px;
+    text-align: center;
+    font-style: italic;
+    box-sizing: border-box;
+}
+
+.sai-voice-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sai-mic-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+    transition: all 0.2s;
+}
+
+.sai-mic-btn svg {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    padding: 14px;
+    transition: all 0.3s;
+    color: #fff;
+    box-sizing: content-box;
+}
+
+.sai-mic-btn.idle svg {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+}
+
+.sai-mic-btn.idle:hover svg {
+    transform: scale(1.04);
+}
+
+.sai-mic-btn:disabled svg {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.sai-mic-btn.listening svg {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+    animation: sai-pulse-green 0.8s ease-in-out infinite;
+}
+
+.sai-mic-btn.speaking svg {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+
+.sai-mic-label {
+    font-size: 0.76rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.sai-voice-hint {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    text-align: center;
+    margin: 0;
+}
+
+/* ── Voice Wave ── */
+.voice-wave {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    padding: 14px;
+    box-sizing: border-box;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+}
+
+.voice-wave span {
+    display: block;
+    width: 4px;
+    border-radius: 2px;
+    background: #fff;
+    height: 10px;
+}
+
+.voice-wave.active span {
+    animation: sai-wave 0.9s ease-in-out infinite;
+}
+
+.voice-wave span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.voice-wave span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.voice-wave span:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.voice-wave span:nth-child(4) {
+    animation-delay: 0.15s;
+}
+
+.voice-wave span:nth-child(5) {
+    animation-delay: 0s;
+}
+
+/* ── Keyframes ── */
+@keyframes sai-fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes sai-slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes sai-msgIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes sai-typingDot {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0.6);
+        opacity: 0.4;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes sai-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+    }
+}
+
+@keyframes sai-pulse-green {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+    }
+
+    50% {
+        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    }
+}
+
+@keyframes sai-blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.25;
+    }
+}
+
+@keyframes sai-wave {
+
+    0%,
+    100% {
+        height: 10px;
+    }
+
+    50% {
+        height: 26px;
+    }
+}
+
+@media (max-width: 600px) {
+    .sai-modal {
+        border-radius: 14px;
+        height: 96vh;
+    }
+
+    .sai-tabs {
+        display: none;
+    }
+
+    .sai-bubble {
+        max-width: 92%;
+        font-size: 0.86rem;
+    }
+
+    .sai-messages,
+    .sai-input-area,
+    .sai-voice-area {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
