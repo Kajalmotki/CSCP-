@@ -294,11 +294,7 @@ ${base64Image ? "CRITICAL INSTRUCTION: Analyze the uploaded image as an Elite Po
 
     const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
     const modelsToTry = [
-        "gemini-3.0-flash-preview", 
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite",
-        "gemini-3.1-pro-preview",
-        "gemini-3.1-flash-lite-preview"
+        "gemini-3-flash-preview"
     ];
     
     try {
@@ -316,7 +312,7 @@ ${base64Image ? "CRITICAL INSTRUCTION: Analyze the uploaded image as an Elite Po
 
         const requestBody = {
             contents: [{ parts: payloadParts }],
-            generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+            generationConfig: { temperature: 0.7, maxOutputTokens: 8192 }
         };
 
         let response = null;
@@ -352,7 +348,9 @@ ${base64Image ? "CRITICAL INSTRUCTION: Analyze the uploaded image as an Elite Po
         }
         
         const data = await response.json();
-        const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't generate a response.";
+        const partsInfo = data.candidates?.[0]?.content?.parts || [];
+        const answerText = partsInfo.map(p => p.text).filter(Boolean).join('\n\n');
+        const answer = answerText || "I'm sorry, I couldn't generate a response.";
         
         return { answer, sources: modulesConsulted };
     } catch (err) {
