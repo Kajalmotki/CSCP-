@@ -1,0 +1,80 @@
+/* HEIMDALL Phase 10 — Scenario Simulator Styles */
+
+.scenario-simulator {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.slider-group {
+    margin-bottom: 1.5rem;
+}
+
+.slider-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.8rem;
+}
+
+.slider-group input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent-primary);
+    cursor: pointer;
+}
+
+.simulator-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--glass-border);
+}
+
+.result-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.result-metric .label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.result-metric .value {
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.result-metric .value.positive { color: #10b981; }
+.result-metric .value.negative { color: #ef4444; }
+
+.result-insight {
+    padding: 1rem;
+    background: rgba(var(--accent-primary), 0.05);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--accent-primary);
+}
+
+.result-insight strong {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.result-insight p {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+}
+
+.sim-loading {
+    font-size: 0.8rem;
+    color: var(--accent-primary);
+    font-style: italic;
+    text-align: center;
+    animation: fadeIn 0.3s ease-in-out;
+}

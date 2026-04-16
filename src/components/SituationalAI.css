@@ -1,666 +1,243 @@
-/* =====================================================
-   SituationalAI.css — White background, black text
-   ===================================================== */
+/* HEIMDALL Phase 12 — Aria Analyze Workspace Styles */
 
-.sai-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    animation: sai-fadeIn 0.25s ease;
-}
-
-.sai-modal {
-    width: 100%;
-    max-width: 720px;
-    height: 92vh;
-    max-height: 900px;
-    border-radius: 20px;
+.aria-analyze-workspace {
     display: flex;
     flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background: var(--bg-primary);
     overflow: hidden;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
-    animation: sai-slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    animation: fadeIn 0.4s ease-out;
 }
 
-/* ── Header ── */
-.sai-header {
-    padding: 1.1rem 1.4rem 0.9rem;
+/* Header */
+.aria-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 1rem;
-    border-bottom: 1px solid #e5e7eb;
-    flex-shrink: 0;
-    background: #f9fafb;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sai-avatar-wrap {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
-    flex: 1;
-    min-width: 0;
+    gap: 15px;
 }
 
 .sai-avatar {
+    width: 44px;
+    height: 44px;
+    background: var(--accent-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
     position: relative;
-    flex-shrink: 0;
-}
-
-.sai-avatar-emoji {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    display: block;
-    font-size: 1.5rem;
-    line-height: 48px;
-    text-align: center;
-    flex-shrink: 0;
-    box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
-}
-
-.sai-avatar-pulse {
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    transition: all 0.3s;
-}
-
-.sai-avatar-pulse.speaking {
-    border-color: #6366f1;
-    animation: sai-pulse 1s ease-in-out infinite;
-}
-
-.sai-avatar-pulse.listening {
-    border-color: #16a34a;
-    animation: sai-pulse 0.6s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
 }
 
 .sai-name {
     font-size: 1.1rem;
     font-weight: 700;
+    color: var(--text-primary);
     margin: 0;
-    color: #111827;
 }
 
 .sai-status {
-    font-size: 0.76rem;
-    color: #6b7280;
+    font-size: 0.8rem;
+    color: var(--text-muted);
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 6px;
 }
 
 .sai-dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    display: inline-block;
-    flex-shrink: 0;
 }
 
-.sai-dot.idle {
-    background: #9ca3af;
-}
+.sai-dot.idle { background: var(--text-muted); }
+.sai-dot.listening { background: #10b981; box-shadow: 0 0 8px #10b981; }
+.sai-dot.thinking { background: #f59e0b; animation: pulse 1s infinite; }
+.sai-dot.speaking { background: var(--accent-primary); box-shadow: 0 0 8px var(--accent-primary); }
 
-.sai-dot.listening {
-    background: #16a34a;
-    animation: sai-blink 0.7s ease-in-out infinite;
-}
-
-.sai-dot.thinking {
-    background: #f59e0b;
-    animation: sai-blink 0.5s ease-in-out infinite;
-}
-
-.sai-dot.speaking {
-    background: #6366f1;
-    animation: sai-blink 0.8s ease-in-out infinite;
-}
-
-/* ── Mode Tabs (Enhanced Premium Design) ── */
+/* Tabs */
 .sai-tabs {
     display: flex;
-    gap: 4px;
-    background: #f1f5f9;
-    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
     padding: 4px;
-    flex-shrink: 0;
-    border: 1px solid #e2e8f0;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    gap: 4px;
 }
 
 .sai-tab {
-    padding: 0.4rem 0.95rem;
-    border-radius: 8px;
+    padding: 6px 16px;
+    border-radius: 6px;
     border: none;
     background: transparent;
-    color: #64748b;
-    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-}
-
-.sai-tab:hover:not(.active) {
-    color: #334155;
-    background: rgba(255, 255, 255, 0.5);
+    transition: all 0.2s ease;
 }
 
 .sai-tab.active {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: #ffffff;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
 }
 
-.sai-close {
-    background: #f3f4f6;
-    border: none;
-    color: #6b7280;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.sai-close:hover {
-    background: #fee2e2;
-    color: #ef4444;
-}
-
-/* ── Messages ── */
+/* Messages Area */
 .sai-messages {
     flex: 1;
     overflow-y: auto;
-    padding: 1.1rem 1.4rem;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
-    background: #ffffff;
-}
-
-.sai-messages::-webkit-scrollbar {
-    width: 5px;
-}
-
-.sai-messages::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.sai-messages::-webkit-scrollbar-thumb {
-    background: #d1d5db;
-    border-radius: 3px;
+    gap: 1.5rem;
 }
 
 .sai-msg-wrap {
     display: flex;
-    align-items: flex-end;
-    gap: 0.55rem;
-    animation: sai-msgIn 0.22s ease;
+    gap: 12px;
+    max-width: 900px;
 }
 
-.sai-msg-wrap.user {
-    flex-direction: row-reverse;
-}
+.sai-msg-wrap.aria { align-self: flex-start; }
+.sai-msg-wrap.user { align-self: flex-end; flex-direction: row-reverse; }
 
 .sai-msg-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--accent-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #fff;
+    color: white;
+    font-weight: 800;
+    font-size: 0.75rem;
     flex-shrink: 0;
 }
 
 .sai-bubble {
-    max-width: 80%;
-    padding: 0.85rem 1rem;
-    border-radius: 16px;
-    font-size: 0.9rem;
-    line-height: 1.65;
-}
-
-.sai-bubble.aria {
-    background: #f3f4f6;
-    border: 1px solid #e5e7eb;
-    border-bottom-left-radius: 4px;
-    color: #111827;
+    padding: 1.25rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .sai-bubble.user {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--accent-primary);
+    color: white;
+    border: none;
     border-bottom-right-radius: 4px;
-    color: #fff;
 }
 
-.sai-bubble.error {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #b91c1c;
-    font-size: 0.83rem;
-    white-space: pre-wrap;
-    font-family: monospace;
+.sai-bubble.aria {
+    border-bottom-left-radius: 4px;
+    color: #cbd5e1; /* Professional light text for dark cards */
 }
 
-.sai-bubble p {
-    margin: 0;
-    color: inherit;
-}
+/* Typography in bubbles */
+.sai-bubble strong { color: var(--text-primary); font-weight: 700; }
+.sai-bubble h3 { color: var(--text-primary); margin-top: 1rem; }
 
-.sai-bubble strong {
-    color: #111827;
-}
-
-.sai-sources {
-    margin-top: 0.55rem;
-    padding-top: 0.45rem;
-    border-top: 1px solid #e5e7eb;
-    font-size: 0.73rem;
-    color: #9ca3af;
-}
-
-/* ── Typing ── */
-.sai-typing {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 0.7rem 0.9rem !important;
-}
-
-.sai-typing span {
-    width: 7px;
-    height: 7px;
-    background: #9ca3af;
-    border-radius: 50%;
-    animation: sai-typingDot 1.2s ease-in-out infinite;
-    display: block;
-}
-
-.sai-typing span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.sai-typing span:nth-child(3) {
-    animation-delay: 0.4s;
-}
-
-/* ── Suggestions ── */
-.sai-suggestions {
-    padding: 0 1.4rem 0.9rem;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    flex-shrink: 0;
-    background: #fff;
-}
-
-.sai-suggestion {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 9px;
-    color: #374151;
-    font-size: 0.8rem;
-    padding: 0.5rem 0.85rem;
-    cursor: pointer;
-    text-align: left;
-    transition: all 0.18s;
-    line-height: 1.4;
-}
-
-.sai-suggestion:hover {
-    background: #eff6ff;
-    border-color: #bfdbfe;
-    color: #1d4ed8;
-}
-
-/* ── Chat Input ── */
+/* Input Area */
 .sai-input-area {
-    padding: 0.85rem 1.4rem 1.1rem;
-    border-top: 1px solid #e5e7eb;
-    flex-shrink: 0;
-    background: #f9fafb;
+    padding: 1.5rem 2rem;
+    background: var(--bg-primary);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sai-form {
     display: flex;
-    gap: 8px;
-    align-items: center;
+    gap: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 8px;
+    max-width: 1000px;
+    margin: 0 auto;
+    transition: border-color 0.2s;
+}
+
+.sai-form:focus-within {
+    border-color: var(--accent-primary);
 }
 
 .sai-input {
     flex: 1;
-    background: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 12px;
-    color: #111827;
-    font-size: 0.92rem;
-    padding: 0.68rem 1rem;
+    background: transparent;
+    border: none;
+    padding: 8px;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 1rem;
+    resize: none;
     outline: none;
-    transition: all 0.2s;
-}
-
-.sai-input:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.sai-input::placeholder {
-    color: #9ca3af;
-}
-
-.sai-input:disabled {
-    opacity: 0.5;
 }
 
 .sai-send {
-    width: 42px;
-    height: 42px;
-    border-radius: 11px;
+    background: var(--accent-primary);
+    color: white;
     border: none;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: #fff;
-    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
-    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+    cursor: pointer;
+    transition: transform 0.2s;
 }
 
 .sai-send:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+    transform: scale(1.05);
 }
 
-.sai-send:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-/* ── Voice Interface ── */
-.sai-voice-area {
-    padding: 1.1rem 1.4rem 1.3rem;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    flex-shrink: 0;
-    background: #f9fafb;
-}
-
-.sai-transcript {
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 10px;
-    padding: 0.7rem 1rem;
-    color: #1d4ed8;
-    font-size: 0.87rem;
-    width: 100%;
-    min-height: 38px;
-    text-align: center;
-    font-style: italic;
-    box-sizing: border-box;
-}
-
-.sai-voice-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.sai-mic-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-    border: none;
-    cursor: pointer;
-    background: none;
-    padding: 0;
-    transition: all 0.2s;
-}
-
-.sai-mic-btn svg {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    padding: 14px;
-    transition: all 0.3s;
-    color: #fff;
-    box-sizing: content-box;
-}
-
-.sai-mic-btn.idle svg {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
-}
-
-.sai-mic-btn.idle:hover svg {
-    transform: scale(1.04);
-}
-
-.sai-mic-btn:disabled svg {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.sai-mic-btn.listening svg {
-    background: linear-gradient(135deg, #16a34a, #22c55e);
-    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
-    animation: sai-pulse-green 0.8s ease-in-out infinite;
-}
-
-.sai-mic-btn.speaking svg {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-}
-
-.sai-mic-label {
-    font-size: 0.76rem;
-    color: #6b7280;
-    font-weight: 500;
-}
-
-.sai-voice-hint {
+.sai-word-counter {
+    max-width: 1000px;
+    margin: 8px auto 0;
     font-size: 0.75rem;
-    color: #9ca3af;
-    text-align: center;
-    margin: 0;
+    color: var(--text-muted);
 }
 
-/* ── Voice Wave ── */
-.voice-wave {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    padding: 14px;
-    box-sizing: border-box;
-    justify-content: center;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+/* Tables & Data */
+.sai-table-wrap {
+    margin: 1rem 0;
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.voice-wave span {
-    display: block;
-    width: 4px;
-    border-radius: 2px;
-    background: #fff;
-    height: 10px;
+.sai-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
 }
 
-.voice-wave.active span {
-    animation: sai-wave 0.9s ease-in-out infinite;
+.sai-table th {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 10px;
+    text-align: left;
+    color: var(--text-primary);
 }
 
-.voice-wave span:nth-child(1) {
-    animation-delay: 0s;
+.sai-table td {
+    padding: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.voice-wave span:nth-child(2) {
-    animation-delay: 0.15s;
-}
-
-.voice-wave span:nth-child(3) {
-    animation-delay: 0.3s;
-}
-
-.voice-wave span:nth-child(4) {
-    animation-delay: 0.15s;
-}
-
-.voice-wave span:nth-child(5) {
-    animation-delay: 0s;
-}
-
-/* ── Keyframes ── */
-@keyframes sai-fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@keyframes sai-slideUp {
-    from {
-        transform: translateY(30px);
-        opacity: 0;
-    }
-
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes sai-msgIn {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes sai-typingDot {
-
-    0%,
-    80%,
-    100% {
-        transform: scale(0.6);
-        opacity: 0.4;
-    }
-
-    40% {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-
-@keyframes sai-pulse {
-
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
-    }
-
-    50% {
-        box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
-    }
-}
-
-@keyframes sai-pulse-green {
-
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-    }
-
-    50% {
-        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
-    }
-}
-
-@keyframes sai-blink {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.25;
-    }
-}
-
-@keyframes sai-wave {
-
-    0%,
-    100% {
-        height: 10px;
-    }
-
-    50% {
-        height: 26px;
-    }
-}
-
-@media (max-width: 600px) {
-    .sai-modal {
-        border-radius: 14px;
-        height: 96vh;
-    }
-
-    .sai-tabs {
-        transform: scale(0.9);
-        transform-origin: right center;
-    }
-
-    .sai-bubble {
-        max-width: 92%;
-        font-size: 0.86rem;
-    }
-
-    .sai-messages,
-    .sai-input-area,
-    .sai-voice-area {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
-}
+/* Scrollbar */
+.sai-messages::-webkit-scrollbar { width: 6px; }
+.sai-messages::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }

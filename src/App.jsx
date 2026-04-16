@@ -4,6 +4,8 @@ import ChatArea from './components/ChatArea';
 import ChapterModal from './components/ChapterModal';
 import AscmDictionary from './components/AscmDictionary';
 import SituationalAI from './components/SituationalAI';
+import Dashboard from './components/Dashboard';
+import Topbar from './components/Topbar';
 import { CSCP_PERMANENT_KNOWLEDGE } from './data/csc_permanent_data.js';
 import confetti from 'canvas-confetti';
 import { playSound, triggerHaptic } from './utils/haptics.js';
@@ -19,8 +21,7 @@ function App() {
   const [cscpContext, setCscpContext] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeChapter, setActiveChapter] = useState(null);
-  const [showDictionary, setShowDictionary] = useState(false);
-  const [showSituationalAI, setShowSituationalAI] = useState(false);
+  const [activeView, setActiveView] = useState('dashboard'); // Default to Enterprise Dashboard
 
   // Persistent Quiz Stats tracking
   const [quizStats, setQuizStats] = useState(() => {
@@ -196,33 +197,52 @@ function App() {
         onReset={resetProgress}
         theme={theme}
         toggleTheme={toggleTheme}
-        onOpenDictionary={() => setShowDictionary(true)}
-        onOpenSituationalAI={() => setShowSituationalAI(true)}
+        onOpenDictionary={() => setActiveView('dictionary')}
+        onOpenSituationalAI={() => setActiveView('analyze')}
+        onOpenDashboard={() => setActiveView('dashboard')}
+        onOpenChat={() => setActiveView('chat')}
+        activeView={activeView}
       />
-      <ChatArea
-        cscpContext={cscpContext}
-        permanentKnowledge={CSCP_PERMANENT_KNOWLEDGE}
-        onQuizResult={handleQuizResult}
-        addXP={addXP}
-        flashcardProgress={flashcardProgress}
-        onFlashcardReview={handleFlashcardReview}
-      />
+      
+      <div className="layout-content">
+        <Topbar 
+          onThemeToggle={toggleTheme} 
+          theme={theme} 
+          onSearch={() => setActiveView('analyze')} 
+        />
+        
+        <main className="main-workspace">
+          {activeView === 'dashboard' && <Dashboard />}
+          {activeView === 'analyze' && (
+            <SituationalAI
+              isOpen={true}
+              onClose={() => setActiveView('dashboard')}
+            />
+          )}
+          {activeView === 'dictionary' && (
+            <AscmDictionary
+              isOpen={true}
+              onClose={() => setActiveView('dashboard')}
+            />
+          )}
+          {activeView === 'chat' && (
+            <ChatArea
+              cscpContext={cscpContext}
+              permanentKnowledge={CSCP_PERMANENT_KNOWLEDGE}
+              onQuizResult={handleQuizResult}
+              addXP={addXP}
+              flashcardProgress={flashcardProgress}
+              onFlashcardReview={handleFlashcardReview}
+            />
+          )}
+        </main>
+      </div>
 
       <ChapterModal
         isOpen={activeChapter !== null}
         onClose={() => setActiveChapter(null)}
         chapter={activeChapter}
         stat={activeChapter ? quizStats.find(s => s.chapter === activeChapter) : null}
-      />
-
-      <AscmDictionary
-        isOpen={showDictionary}
-        onClose={() => setShowDictionary(false)}
-      />
-
-      <SituationalAI
-        isOpen={showSituationalAI}
-        onClose={() => setShowSituationalAI(false)}
       />
 
       {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}

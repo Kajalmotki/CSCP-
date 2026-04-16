@@ -10,6 +10,21 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
+// HEIMDALL Math Engine
+const { calculateBEP, calculateEMV, calculateEOQ, calculateROP, calculateSafetyStock, buildChartUrl } = require('./services/math_engine');
+// HEIMDALL Forecast Engine
+const { forecastSMA, forecastWMA, forecastSES, forecastHolt, forecastLinearRegression, forecastCompare } = require('./services/forecast_engine');
+// HEIMDALL Optimization Engine
+const { solveTransportation, selectSupplier, optimizeProduction } = require('./services/optimization_engine');
+// HEIMDALL Simulation Engine
+const { simulateRisk, simulateScenarios } = require('./services/simulation_engine');
+// HEIMDALL Network Engine
+const { findOptimalRoute, analyzeNetworkResilience } = require('./services/network_engine');
+// HEIMDALL ML Engine
+const { detectAnomalies, predictRiskScores } = require('./services/ml_engine');
+// HEIMDALL Decision Engine
+const { optimizePricingRL } = require('./services/decision_engine');
+
 // pdf-parse is installed as a devDependency — used for ASCM Dictionary
 let pdfParse;
 try { pdfParse = require('../node_modules/pdf-parse/index.js'); } catch (e) {
@@ -592,6 +607,385 @@ const server = http.createServer(async (req, res) => {
         return;
     }
 
+    // ─────────────────────────────────────────
+    // HEIMDALL — Math Engine API Endpoints
+    // ─────────────────────────────────────────
+
+    // Utility: parse POST body as JSON
+    const parseBody = (req) => new Promise((resolve, reject) => {
+        let body = '';
+        req.on('data', d => { body += d; });
+        req.on('end', () => {
+            try { resolve(JSON.parse(body)); }
+            catch (e) { reject(new Error('Invalid JSON')); }
+        });
+    });
+
+    // POST /api/v1/math/bep — Break-Even Point
+    if (req.method === 'POST' && req.url === '/api/v1/math/bep') {
+        try {
+            const { fixedCost, variableCost, sellingPrice } = await parseBody(req);
+            if (!fixedCost || !variableCost || !sellingPrice) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'fixedCost, variableCost, and sellingPrice are required' }));
+            }
+            const result = calculateBEP(Number(fixedCost), Number(variableCost), Number(sellingPrice));
+            result.chartUrl = result.charts?.[0] ? buildChartUrl(result.charts[0]) : null;
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/math/emv — Expected Monetary Value
+    if (req.method === 'POST' && req.url === '/api/v1/math/emv') {
+        try {
+            const { scenarios, investmentCost } = await parseBody(req);
+            if (!scenarios || !Array.isArray(scenarios)) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'scenarios array is required' }));
+            }
+            const result = calculateEMV(scenarios, Number(investmentCost || 0));
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/math/eoq — Economic Order Quantity
+    if (req.method === 'POST' && req.url === '/api/v1/math/eoq') {
+        try {
+            const { annualDemand, orderCost, holdingCost } = await parseBody(req);
+            if (!annualDemand || !orderCost || !holdingCost) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'annualDemand, orderCost, and holdingCost are required' }));
+            }
+            const result = calculateEOQ(Number(annualDemand), Number(orderCost), Number(holdingCost));
+            result.chartUrl = result.charts?.[0] ? buildChartUrl(result.charts[0]) : null;
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/math/rop — Reorder Point
+    if (req.method === 'POST' && req.url === '/api/v1/math/rop') {
+        try {
+            const { dailyDemand, leadTimeDays, demandStdDev, serviceLevel } = await parseBody(req);
+            if (!dailyDemand || !leadTimeDays) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'dailyDemand and leadTimeDays are required' }));
+            }
+            const result = calculateROP(Number(dailyDemand), Number(leadTimeDays), Number(demandStdDev || 0), Number(serviceLevel || 0.95));
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/math/safety-stock — Safety Stock Calculation
+    if (req.method === 'POST' && req.url === '/api/v1/math/safety-stock') {
+        try {
+            const { demandStdDev, leadTimeDays, leadTimeStdDev, avgDailyDemand, serviceLevel } = await parseBody(req);
+            if (!demandStdDev || !leadTimeDays) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'demandStdDev and leadTimeDays are required' }));
+            }
+            const result = calculateSafetyStock(Number(demandStdDev), Number(leadTimeDays), Number(leadTimeStdDev || 0), Number(avgDailyDemand || 0), Number(serviceLevel || 0.95));
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // HEIMDALL — Forecast Engine API Endpoints
+    // ─────────────────────────────────────────
+
+    // POST /api/v1/forecast/sma — Simple Moving Average
+    if (req.method === 'POST' && req.url === '/api/v1/forecast/sma') {
+        try {
+            const { data, window, periods } = await parseBody(req);
+            if (!data || !Array.isArray(data)) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'data array is required' }));
+            }
+            const result = forecastSMA(data.map(Number), window || 3, periods || 6);
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/forecast/holt — Double Exponential Smoothing
+    if (req.method === 'POST' && req.url === '/api/v1/forecast/holt') {
+        try {
+            const { data, alpha, beta, periods } = await parseBody(req);
+            if (!data || !Array.isArray(data)) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'data array is required' }));
+            }
+            const result = forecastHolt(data.map(Number), alpha || 0.3, beta || 0.1, periods || 6);
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/forecast/compare — Compare all models
+    if (req.method === 'POST' && req.url === '/api/v1/forecast/compare') {
+        try {
+            const { data, periods } = await parseBody(req);
+            if (!data || !Array.isArray(data)) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'data array is required' }));
+            }
+            const result = forecastCompare(data.map(Number), periods || 6);
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // HEIMDALL — Optimization Engine API Endpoints
+    // ─────────────────────────────────────────
+
+    // POST /api/v1/optimize/transport — Transportation Problem
+    if (req.method === 'POST' && req.url === '/api/v1/optimize/transport') {
+        try {
+            const { supply, demand, costMatrix } = await parseBody(req);
+            if (!supply || !demand || !costMatrix) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'supply, demand, and costMatrix are required' }));
+            }
+            const result = solveTransportation(supply.map(Number), demand.map(Number), costMatrix.map(r => r.map(Number)));
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/optimize/supplier — Weighted Supplier Selection
+    if (req.method === 'POST' && req.url === '/api/v1/optimize/supplier') {
+        try {
+            const { suppliers, criteria } = await parseBody(req);
+            if (!suppliers || !criteria) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'suppliers and criteria are required' }));
+            }
+            const result = selectSupplier(suppliers, criteria);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/optimize/production — Production Planning
+    if (req.method === 'POST' && req.url === '/api/v1/optimize/production') {
+        try {
+            const { products, totalCapacity } = await parseBody(req);
+            if (!products || !totalCapacity) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'products and totalCapacity are required' }));
+            }
+            const result = optimizeProduction(products, Number(totalCapacity));
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // HEIMDALL — Simulation Engine API Endpoints
+    // ─────────────────────────────────────────
+
+    // POST /api/v1/simulate/risk — Monte Carlo Risk Simulation
+    if (req.method === 'POST' && req.url === '/api/v1/simulate/risk') {
+        try {
+            const body = await parseBody(req);
+            if (!body.revenue || !body.cost) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'revenue and cost distribution parameters are required' }));
+            }
+            const result = simulateRisk(body);
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/simulate/scenario — What-If Scenario Comparison
+    if (req.method === 'POST' && req.url === '/api/v1/simulate/scenario') {
+        try {
+            const { scenarios, iterations } = await parseBody(req);
+            if (!scenarios || !Array.isArray(scenarios)) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'scenarios array is required' }));
+            }
+            const result = simulateScenarios(scenarios, iterations || 5000);
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // HEIMDALL — Network Engine API Endpoints
+    // ─────────────────────────────────────────
+
+    // POST /api/v1/network/route — Dijkstra Routing
+    if (req.method === 'POST' && req.url === '/api/v1/network/route') {
+        try {
+            const { nodes, edges, startNode, endNode, criteria } = await parseBody(req);
+            if (!nodes || !edges || !startNode || !endNode) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'nodes, edges, startNode, and endNode are required' }));
+            }
+            const result = findOptimalRoute(nodes, edges, startNode, endNode, criteria || 'cost');
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/network/analyze — Network Bottleneck Analysis
+    if (req.method === 'POST' && req.url === '/api/v1/network/analyze') {
+        try {
+            const { nodes, edges } = await parseBody(req);
+            if (!nodes || !edges) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'nodes and edges are required' }));
+            }
+            const result = analyzeNetworkResilience(nodes, edges);
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // HEIMDALL — ML Engine API Endpoints
+    // ─────────────────────────────────────────
+
+    // POST /api/v1/ml/anomaly — Z-Score Anomaly Detection
+    if (req.method === 'POST' && req.url === '/api/v1/ml/anomaly') {
+        try {
+            const { data, threshold } = await parseBody(req);
+            if (!data || !Array.isArray(data)) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'data array is required' }));
+            }
+            const result = detectAnomalies(data.map(Number), threshold || 2.0);
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // POST /api/v1/ml/predict-risk — Predictive Entity Risk Profiling
+    if (req.method === 'POST' && req.url === '/api/v1/ml/predict-risk') {
+        try {
+            const { entities, criteria } = await parseBody(req);
+            if (!entities || !criteria) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'entities and criteria arrays are required' }));
+            }
+            const result = predictRiskScores(entities, criteria);
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // HEIMDALL — Decision AI Engine API Endpoints
+    // ─────────────────────────────────────────
+
+    // POST /api/v1/decide/price — Reinforcement Learning Pricing
+    if (req.method === 'POST' && req.url === '/api/v1/decide/price') {
+        try {
+            const { state, iterations } = await parseBody(req);
+            if (!state) {
+                res.writeHead(400, CORS_HEADERS);
+                return res.end(JSON.stringify({ error: 'state is required (e.g., High_Inv_Low_Demand)' }));
+            }
+            const result = optimizePricingRL(state, iterations || 5000);
+            if (result.charts?.[0]) result.chartUrl = buildChartUrl(result.charts[0]);
+            res.writeHead(200, CORS_HEADERS);
+            return res.end(JSON.stringify({ status: 'success', data: result }));
+        } catch (e) {
+            res.writeHead(500, CORS_HEADERS);
+            return res.end(JSON.stringify({ error: e.message }));
+        }
+    }
+
+    // GET /api/v1/health — HEIMDALL System Health
+    if (req.method === 'GET' && req.url === '/api/v1/health') {
+        res.writeHead(200, CORS_HEADERS);
+        return res.end(JSON.stringify({
+            status: 'operational',
+            system: 'HEIMDALL',
+            version: '2.3.0',
+            engines: {
+                rag: { status: 'active', chunks: knowledgeChunks.length },
+                math: { status: 'active', algorithms: ['BEP', 'EMV', 'EOQ', 'ROP', 'SafetyStock'] },
+                forecast: { status: 'active', algorithms: ['SMA', 'WMA', 'SES', 'Holt', 'LinearRegression'] },
+                optimization: { status: 'active', algorithms: ['Transportation', 'SupplierSelection', 'ProductionPlanning'] },
+                simulation: { status: 'active', algorithms: ['MonteCarlo', 'ScenarioComparison'] },
+                network: { status: 'active', algorithms: ['DijkstraRouting', 'ResilienceAnalysis', 'BottleneckDetection'] },
+                ml: { status: 'active', algorithms: ['ZScoreAnomaly', 'MultivariateRiskPrediction'] },
+                decision: { status: 'active', algorithms: ['QLearningPricing'] },
+                dictionary: { status: dictionaryCache ? 'active' : 'loading', entries: dictionaryCache ? dictionaryCache.length : 0 }
+            },
+            uptime: process.uptime()
+        }));
+    }
+
     res.writeHead(404, CORS_HEADERS);
     res.end(JSON.stringify({ error: 'Not found' }));
 });
@@ -602,6 +996,36 @@ loadAllModules();
 // Pre-load dictionary in background so first user request is instant
 loadDictionary().then(e => console.log(`[Dictionary] Ready with ${e.length} entries`)).catch(() => { });
 server.listen(PORT, () => {
-    console.log(`\n✅ CSCP API running at http://localhost:${PORT}`);
-    console.log('   Endpoints: /api/situational-ai  /api/dictionary  /api/dictionary/search\n');
+    console.log(`\n⚔️  HEIMDALL v2.0 — Supply Chain World Brain`);
+    console.log(`✅ Running at http://localhost:${PORT}\n`);
+    console.log('   ── Core ──');
+    console.log('   POST /api/situational-ai        Aria AI Advisor');
+    console.log('   GET  /api/dictionary             ASCM Dictionary');
+    console.log('   ── Math Engine ──');
+    console.log('   POST /api/v1/math/bep            Break-Even Point');
+    console.log('   POST /api/v1/math/emv            Expected Monetary Value');
+    console.log('   POST /api/v1/math/eoq            Economic Order Quantity');
+    console.log('   POST /api/v1/math/rop            Reorder Point');
+    console.log('   POST /api/v1/math/safety-stock   Safety Stock');
+    console.log('   ── Forecast Engine ──');
+    console.log('   POST /api/v1/forecast/sma        Simple Moving Average');
+    console.log('   POST /api/v1/forecast/holt       Holt\'s Double Exp. Smoothing');
+    console.log('   POST /api/v1/forecast/compare    Multi-Model Comparison');
+    console.log('   ── Optimization Engine ──');
+    console.log('   POST /api/v1/optimize/transport   Transportation Problem');
+    console.log('   POST /api/v1/optimize/supplier    Supplier Selection');
+    console.log('   POST /api/v1/optimize/production  Production Planning');
+    console.log('   ── Simulation Engine ──');
+    console.log('   POST /api/v1/simulate/risk        Monte Carlo Risk');
+    console.log('   POST /api/v1/simulate/scenario    What-If Scenarios');
+    console.log('   ── Network Engine ──');
+    console.log('   POST /api/v1/network/route        Dijkstra Shortest Path');
+    console.log('   POST /api/v1/network/analyze      Bottleneck & Resilience');
+    console.log('   ── ML Engine ──');
+    console.log('   POST /api/v1/ml/anomaly           Z-Score Outlier Detection');
+    console.log('   POST /api/v1/ml/predict-risk      Predictive Risk Profiling');
+    console.log('   ── Decision AI ──');
+    console.log('   POST /api/v1/decide/price         Q-Learning Pricing Agent');
+    console.log('   ── System ──');
+    console.log('   GET  /api/v1/health               System Health\n');
 });
