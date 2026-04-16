@@ -1,0 +1,126 @@
+.recent-analyses-module {
+    padding: 2rem;
+    height: 100%;
+    overflow-y: auto;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.timeline-container {
+    position: relative;
+    max-width: 800px;
+    margin: 2rem 0;
+    padding-left: 3rem;
+}
+
+.timeline-line {
+    position: absolute;
+    left: 19px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent-primary), transparent);
+}
+
+.timeline-event {
+    position: relative;
+    margin-bottom: 2rem;
+    animation: slideInRight 0.5s ease-out both;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -3rem; /* relative to padding-left 3rem of container */
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: var(--bg-secondary);
+    border: 2px solid var(--glass-border);
+    z-index: 1;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+
+.quiz-icon { border-color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+.ai-icon { border-color: #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); }
+.flashcard-icon { border-color: #f59e0b; box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); }
+.system-icon { border-color: #64748b; }
+
+.timeline-content {
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timeline-content:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-primary);
+    box-shadow: 0 5px 20px rgba(99, 102, 241, 0.15);
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.log-module {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: var(--accent-primary);
+    letter-spacing: 1px;
+}
+
+.log-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.log-title {
+    font-size: 1.2rem;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+}
+
+.log-desc {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.re-run-btn {
+    margin-top: 1rem;
+    background: transparent;
+    border: 1px solid var(--accent-primary);
+    color: var(--accent-primary);
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+}
+
+.re-run-btn:hover {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.log-footer {
+    display: flex;
+    justify-content: flex-start;
+    padding-left: 3rem;
+    max-width: 800px;
+}
+
+.export-log-btn {
+    margin-top: 1rem;
+}

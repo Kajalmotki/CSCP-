@@ -373,8 +373,8 @@ const SituationalAI = ({ isOpen, onClose }) => {
                 elements.push(<div key={i} style={{ height: '0.35rem' }} />);
                 i++; continue;
             }
-            // Image link ![alt](url) with chart download overlay
-            const imgMatch = trimmed.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+            // Image link ![alt](url) with chart download overlay (Allows nested parentheses for Quickchart)
+            const imgMatch = trimmed.match(/^!\[(.*?)\]\((.+)\)$/) || trimmed.match(/!\[(.*?)\]\((.+)\)/);
             if (imgMatch) {
                 const isChart = imgMatch[2].includes('quickchart.io');
                 elements.push(

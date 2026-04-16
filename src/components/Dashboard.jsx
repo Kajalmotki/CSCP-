@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import ScenarioSimulator from './ScenarioSimulator';
 import './Dashboard.css';
 
 const Dashboard = ({ quizStats = [], gamification = {}, flashcardProgress = {} }) => {
+
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); }, []);
 
     // Compute LIVE KPIs from real user data
     const liveKPIs = useMemo(() => {
@@ -64,148 +67,240 @@ const Dashboard = ({ quizStats = [], gamification = {}, flashcardProgress = {} }
         return '—';
     };
 
+    // Calculate XP ring dynamics (assuming 100 XP per level)
+    const xpProgress = liveKPIs.xp % 100;
+    const ringRadius = 22;
+    const ringCircumference = 2 * Math.PI * ringRadius;
+    const ringOffset = ringCircumference - (xpProgress / 100) * ringCircumference;
+
     return (
-        <div className="heimdall-dashboard">
-            <header className="dash-header">
+        <div className={`heimdall-dashboard ${mounted ? 'mounted' : ''}`}>
+            <header className="dash-header staggered-1">
                 <div>
-                    <h1>Your Study Command Center</h1>
-                    <p>Live performance data from your CSCP study sessions</p>
+                    <h1>System Command Center</h1>
+                    <p>Real-time analytics & intelligence for your CSCP study deployment</p>
                 </div>
-                <div className="dash-auth-status">
-                    <span className="status-dot pulse"></span>
-                    Level {liveKPIs.level} • {liveKPIs.xp} XP
+                <div className="dash-auth-status premium-glow">
+                    <div className="xp-ring-container">
+                        <svg width="50" height="50" viewBox="0 0 50 50">
+                            <circle cx="25" cy="25" r={ringRadius} fill="none" stroke="var(--glass-border)" strokeWidth="4" />
+                            <circle 
+                                cx="25" cy="25" r={ringRadius} 
+                                fill="none" stroke="url(#xp-gradient)" 
+                                strokeWidth="4" 
+                                strokeDasharray={ringCircumference} 
+                                strokeDashoffset={ringOffset} 
+                                strokeLinecap="round" 
+                                transform="rotate(-90 25 25)"
+                                style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                            />
+                            <defs>
+                                <linearGradient id="xp-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#6366f1" />
+                                    <stop offset="100%" stopColor="#ec4899" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div className="xp-ring-text">{liveKPIs.level}</div>
+                    </div>
+                    <div className="xp-info">
+                        <strong>Level {liveKPIs.level} Agent</strong>
+                        <span>{liveKPIs.xp} Total XP</span>
+                    </div>
                 </div>
             </header>
 
-            <div className="kpi-grid">
-                <div className={`kpi-card ${getAccuracyStatus(liveKPIs.accuracy)}`}>
+            <div className="kpi-grid staggered-2">
+                <div className={`kpi-card ${getAccuracyStatus(liveKPIs.accuracy)} glass-panel`}>
                     <div className="kpi-header">
-                        <span className="kpi-label">Quiz Accuracy</span>
+                        <span className="kpi-label">Precision Rate</span>
                         <span className="kpi-trend">{getAccuracyTrend(liveKPIs.accuracy)}</span>
                     </div>
                     <div className="kpi-value">{liveKPIs.accuracy}%</div>
-                    <div className="kpi-sub">{liveKPIs.totalCorrect} / {liveKPIs.totalAnswered} correct</div>
+                    <div className="kpi-sub">{liveKPIs.totalCorrect} / {liveKPIs.totalAnswered} accurate executions</div>
                     <div className="kpi-visual-bar">
-                        <div className="fill" style={{ width: `${liveKPIs.accuracy}%` }}></div>
+                        <div className="fill glow-fill" style={{ width: `${liveKPIs.accuracy}%` }}></div>
                     </div>
                 </div>
 
-                <div className={`kpi-card ${liveKPIs.streak >= 3 ? 'success' : liveKPIs.streak >= 1 ? 'warning' : 'standard'}`}>
+                <div className={`kpi-card ${liveKPIs.streak >= 3 ? 'success' : liveKPIs.streak >= 1 ? 'warning' : 'standard'} glass-panel`}>
                     <div className="kpi-header">
-                        <span className="kpi-label">Study Streak</span>
-                        <span className="kpi-trend">{liveKPIs.streak >= 3 ? '🔥 On Fire' : liveKPIs.streak >= 1 ? '✨ Active' : '—'}</span>
+                        <span className="kpi-label">Active Streak</span>
+                        <span className="kpi-trend">{liveKPIs.streak >= 3 ? '🔥 Dominating' : liveKPIs.streak >= 1 ? '✨ Online' : '—'}</span>
                     </div>
-                    <div className="kpi-value">{liveKPIs.streak} {liveKPIs.streak === 1 ? 'Day' : 'Days'}</div>
-                    <div className="kpi-sub">Consecutive days studied</div>
+                    <div className="kpi-value">{liveKPIs.streak} {liveKPIs.streak === 1 ? 'Cycle' : 'Cycles'}</div>
+                    <div className="kpi-sub">Consecutive deployments</div>
                     <div className="kpi-visual-bar">
-                        <div className="fill" style={{ width: `${Math.min(liveKPIs.streak * 14, 100)}%` }}></div>
+                        <div className="fill glow-fill" style={{ width: `${Math.min(liveKPIs.streak * 14, 100)}%` }}></div>
                     </div>
                 </div>
 
-                <div className={`kpi-card ${liveKPIs.termsMastered > 10 ? 'success' : liveKPIs.termsMastered > 0 ? 'warning' : 'standard'}`}>
+                <div className={`kpi-card ${liveKPIs.termsMastered > 10 ? 'success' : liveKPIs.termsMastered > 0 ? 'warning' : 'standard'} glass-panel`}>
                     <div className="kpi-header">
-                        <span className="kpi-label">Terms Mastered</span>
-                        <span className="kpi-trend">{liveKPIs.termsLearning > 0 ? `${liveKPIs.termsLearning} learning` : '—'}</span>
+                        <span className="kpi-label">Terms Secured</span>
+                        <span className="kpi-trend">{liveKPIs.termsLearning > 0 ? `${liveKPIs.termsLearning} acquiring` : '—'}</span>
                     </div>
                     <div className="kpi-value">{liveKPIs.termsMastered}</div>
-                    <div className="kpi-sub">{liveKPIs.termsTotal} terms reviewed total</div>
+                    <div className="kpi-sub">{liveKPIs.termsTotal} vocabulary terms isolated</div>
                     <div className="kpi-visual-bar">
-                        <div className="fill" style={{ width: liveKPIs.termsTotal > 0 ? `${(liveKPIs.termsMastered / liveKPIs.termsTotal) * 100}%` : '0%' }}></div>
+                        <div className="fill glow-fill" style={{ width: liveKPIs.termsTotal > 0 ? `${(liveKPIs.termsMastered / liveKPIs.termsTotal) * 100}%` : '0%' }}></div>
                     </div>
                 </div>
 
-                <div className={`kpi-card ${liveKPIs.chaptersAttempted >= 6 ? 'success' : liveKPIs.chaptersAttempted >= 3 ? 'warning' : 'standard'}`}>
+                <div className={`kpi-card ${liveKPIs.chaptersAttempted >= 6 ? 'success' : liveKPIs.chaptersAttempted >= 3 ? 'warning' : 'standard'} glass-panel`}>
                     <div className="kpi-header">
-                        <span className="kpi-label">Chapters Covered</span>
-                        <span className="kpi-trend">{liveKPIs.chaptersAttempted}/8</span>
+                        <span className="kpi-label">Network Coverage</span>
+                        <span className="kpi-trend">{liveKPIs.chaptersAttempted}/8 Nodes</span>
                     </div>
                     <div className="kpi-value">{liveKPIs.chaptersAttempted}</div>
-                    <div className="kpi-sub">of 8 CSCP modules attempted</div>
+                    <div className="kpi-sub">of 8 Core CSCP architectures online</div>
                     <div className="kpi-visual-bar">
-                        <div className="fill" style={{ width: `${(liveKPIs.chaptersAttempted / 8) * 100}%` }}></div>
+                        <div className="fill glow-fill" style={{ width: `${(liveKPIs.chaptersAttempted / 8) * 100}%` }}></div>
                     </div>
                 </div>
             </div>
 
-            <div className="dash-main-content">
-                <div className="dash-panel">
-                    <h3>📊 Chapter Performance Breakdown</h3>
-                    <div className="chapter-perf-grid">
-                        {quizStats.map(stat => {
-                            const acc = stat.total > 0 ? ((stat.correct / stat.total) * 100).toFixed(0) : null;
-                            const status = acc === null ? 'not-started' : parseFloat(acc) >= 80 ? 'strong' : parseFloat(acc) >= 50 ? 'moderate' : 'weak';
-                            return (
-                                <div key={stat.chapter} className={`chapter-perf-item ${status}`}>
-                                    <div className="chapter-perf-label">Module {stat.chapter}</div>
-                                    <div className="chapter-perf-bar-wrap">
-                                        <div className="chapter-perf-bar">
-                                            <div className="chapter-perf-fill" style={{ width: acc !== null ? `${acc}%` : '0%' }}></div>
-                                        </div>
-                                        <span className="chapter-perf-pct">{acc !== null ? `${acc}%` : '—'}</span>
-                                    </div>
-                                    <div className="chapter-perf-detail">
-                                        {stat.total > 0 ? `${stat.correct}/${stat.total} correct` : 'Not started'}
-                                    </div>
-                                </div>
-                            );
-                        })}
+            <div className="dash-main-content staggered-3">
+                <div className="dash-column left-col">
+                    <div className="dash-panel glass-panel native-chart-panel">
+                        <h3><span className="icon">📊</span> Dynamic Module Distribution</h3>
+                        <p className="panel-subtitle">Accuracy topography across all active CSCP nodes</p>
+                        
+                        <div className="svg-chart-container">
+                            <svg width="100%" height="240" viewBox="0 0 800 240" preserveAspectRatio="none">
+                                {/* Grid Lines */}
+                                {[0, 25, 50, 75, 100].map((pct, i) => (
+                                    <g key={`grid-${i}`}>
+                                        <line x1="40" y1={200 - (pct * 1.6)} x2="780" y2={200 - (pct * 1.6)} stroke="var(--glass-border)" strokeWidth="1" strokeDasharray="4,4" />
+                                        <text x="30" y={205 - (pct * 1.6)} fill="var(--text-secondary)" fontSize="12" textAnchor="end">{pct}%</text>
+                                    </g>
+                                ))}
+                                
+                                {/* Bars */}
+                                {quizStats.map((stat, i) => {
+                                    const acc = stat.total > 0 ? (stat.correct / stat.total) * 100 : 0;
+                                    const barHeight = mounted ? acc * 1.6 : 0;
+                                    const xOffset = 80 + (i * 90);
+                                    
+                                    let barColor = "url(#bar-weak)";
+                                    if (acc >= 80) barColor = "url(#bar-strong)";
+                                    else if (acc >= 50) barColor = "url(#bar-moderate)";
+                                    else if (stat.total === 0) barColor = "var(--bg-tertiary)";
+                                    
+                                    return (
+                                        <g key={`bar-${stat.chapter}`} className="chart-bar-group">
+                                            <rect 
+                                                x={xOffset} y={200 - barHeight} 
+                                                width="40" height={barHeight} 
+                                                fill={barColor} rx="4" ry="4" 
+                                                className="animated-bar"
+                                            />
+                                            {/* Tooltip Target */}
+                                            <rect x={xOffset} y="40" width="40" height="160" fill="transparent" className="tooltip-trigger" />
+                                            {/* Labels */}
+                                            <text x={xOffset + 20} y="225" fill="var(--text-primary)" fontSize="14" fontWeight="600" textAnchor="middle">M{stat.chapter}</text>
+                                        </g>
+                                    );
+                                })}
+
+                                <defs>
+                                    <linearGradient id="bar-strong" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#10b981" />
+                                        <stop offset="100%" stopColor="rgba(16,185,129,0.3)" />
+                                    </linearGradient>
+                                    <linearGradient id="bar-moderate" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#f59e0b" />
+                                        <stop offset="100%" stopColor="rgba(245,158,11,0.3)" />
+                                    </linearGradient>
+                                    <linearGradient id="bar-weak" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stopColor="#ef4444" />
+                                        <stop offset="100%" stopColor="rgba(239,68,68,0.3)" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="dash-panel simulator-panel glass-panel">
+                        <h3><span className="icon">⚡</span> Predictive Scenario Engine</h3>
+                        <p className="panel-subtitle">Forecast margin risk based on live demand variables</p>
+                        <ScenarioSimulator />
                     </div>
                 </div>
 
-                <div className="dash-panel simulator-panel">
-                    <h3>⚡ What-If Scenario Simulator</h3>
-                    <ScenarioSimulator />
-                </div>
+                <div className="dash-column right-col">
+                    {/* Action Engine */}
+                    <div className="dash-panel glass-panel action-panel">
+                        <h3><span className="icon">🧠</span> Autonomous Action Directives</h3>
+                        <p className="panel-subtitle">AI-generated study protocols</p>
+                        
+                        <div className="action-cards">
+                            {liveKPIs.weakestChapter && liveKPIs.weakestChapter.total > 0 ? (
+                                <div className="smart-action-card critical-action">
+                                    <div className="action-glow"></div>
+                                    <div className="action-content">
+                                        <span className="action-tag">High Priority</span>
+                                        <h4>Vulnerability Detected: Module {liveKPIs.weakestChapter.chapter}</h4>
+                                        <p>Accuracy dropped to {((liveKPIs.weakestChapter.correct / liveKPIs.weakestChapter.total) * 100).toFixed(0)}%. Immediate reinforcement required.</p>
+                                        <button className="premium-btn error-btn">Execute Rescue Protocol →</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="smart-action-card active-action">
+                                    <div className="action-glow"></div>
+                                    <div className="action-content">
+                                        <span className="action-tag">Systems Nominal</span>
+                                        <h4>Awaiting Initial Telemetry</h4>
+                                        <p>Run diagnostic quizzes in the Chat Engine to populate vulnerability heatmaps.</p>
+                                        <button className="premium-btn primary-btn">Launch Chat Engine →</button>
+                                    </div>
+                                </div>
+                            )}
 
-                {/* Live Insights based on real data */}
-                <div className="dash-panel">
-                    <h3>🧠 Study Insights</h3>
-                    <div className="signal-list">
-                        {liveKPIs.weakestChapter && liveKPIs.weakestChapter.total > 0 && (
-                            <div className="signal-item critical">
-                                <div className="signal-icon">⚠️</div>
-                                <div className="signal-text">
-                                    <strong>Weakest Area: Module {liveKPIs.weakestChapter.chapter}</strong>
-                                    <p>Accuracy at {((liveKPIs.weakestChapter.correct / liveKPIs.weakestChapter.total) * 100).toFixed(0)}% — Focus your next study session here.</p>
+                            {liveKPIs.termsLearning > 0 && (
+                                <div className="smart-action-card warning-action">
+                                    <div className="action-content">
+                                        <span className="action-tag">Memory Decay</span>
+                                        <h4>{liveKPIs.termsLearning} Terms Pending Review</h4>
+                                        <p>Spaced repetition algorithms demand immediate review of vulnerable vocabulary.</p>
+                                        <button className="premium-btn warning-btn">Initialize SRS Cycle →</button>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        {liveKPIs.strongestChapter && liveKPIs.strongestChapter.total > 0 && (
-                            <div className="signal-item success">
-                                <div className="signal-icon">✅</div>
-                                <div className="signal-text">
-                                    <strong>Strongest Area: Module {liveKPIs.strongestChapter.chapter}</strong>
-                                    <p>Accuracy at {((liveKPIs.strongestChapter.correct / liveKPIs.strongestChapter.total) * 100).toFixed(0)}% — Great mastery!</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="dash-panel glass-panel insights-panel">
+                        <h3><span className="icon">📡</span> System Telemetry</h3>
+                        <div className="signal-list">
+                            {liveKPIs.strongestChapter && liveKPIs.strongestChapter.total > 0 && (
+                                <div className="signal-item success">
+                                    <div className="signal-indicator"></div>
+                                    <div className="signal-text">
+                                        <strong>Peak Efficiency: Module {liveKPIs.strongestChapter.chapter}</strong>
+                                        <p>Maintaining {((liveKPIs.strongestChapter.correct / liveKPIs.strongestChapter.total) * 100).toFixed(0)}% stability.</p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        {liveKPIs.streak >= 3 && (
-                            <div className="signal-item success">
-                                <div className="signal-icon">🔥</div>
-                                <div className="signal-text">
-                                    <strong>{liveKPIs.streak}-Day Streak!</strong>
-                                    <p>Consistency is the key to passing the CSCP exam. Keep it going!</p>
+                            )}
+                            {liveKPIs.streak >= 3 && (
+                                <div className="signal-item success">
+                                    <div className="signal-indicator"></div>
+                                    <div className="signal-text">
+                                        <strong>{liveKPIs.streak}-Cycle Chain Secured</strong>
+                                        <p>Network resonance increasing. Maintain daily protocols.</p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        {liveKPIs.totalAnswered === 0 && (
-                            <div className="signal-item warning">
-                                <div className="signal-icon">📝</div>
-                                <div className="signal-text">
-                                    <strong>No quizzes taken yet</strong>
-                                    <p>Head to CSCP Prep Chat and start a chapter quiz to see your stats here!</p>
+                            )}
+                            {liveKPIs.chaptersAttempted > 0 && liveKPIs.chaptersAttempted < 8 && (
+                                <div className="signal-item standard">
+                                    <div className="signal-indicator"></div>
+                                    <div className="signal-text">
+                                        <strong>{8 - liveKPIs.chaptersAttempted} Nodes Offline</strong>
+                                        <p>Significant portions of the CSCP map remain unexplored.</p>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        {liveKPIs.chaptersAttempted > 0 && liveKPIs.chaptersAttempted < 8 && (
-                            <div className="signal-item warning">
-                                <div className="signal-icon">📚</div>
-                                <div className="signal-text">
-                                    <strong>{8 - liveKPIs.chaptersAttempted} Modules Untouched</strong>
-                                    <p>You've covered {liveKPIs.chaptersAttempted} of 8 modules. Branch out for full exam coverage.</p>
-                                </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

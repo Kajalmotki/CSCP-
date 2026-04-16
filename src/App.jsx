@@ -6,6 +6,11 @@ import AscmDictionary from './components/AscmDictionary';
 import SituationalAI from './components/SituationalAI';
 import Dashboard from './components/Dashboard';
 import Topbar from './components/Topbar';
+import ComingSoon from './components/ComingSoon';
+import Forecasting from './components/Forecasting';
+import Optimization from './components/Optimization';
+import RecentAnalyses from './components/RecentAnalyses';
+import Settings from './components/Settings';
 import { CSCP_PERMANENT_KNOWLEDGE } from './data/csc_permanent_data.js';
 import confetti from 'canvas-confetti';
 import { playSound, triggerHaptic } from './utils/haptics.js';
@@ -201,6 +206,10 @@ function App() {
         onOpenSituationalAI={() => setActiveView('analyze')}
         onOpenDashboard={() => setActiveView('dashboard')}
         onOpenChat={() => setActiveView('chat')}
+        onOpenForecast={() => setActiveView('forecast')}
+        onOpenOptimize={() => setActiveView('optimize')}
+        onOpenHistory={() => setActiveView('history')}
+        onOpenSettings={() => setActiveView('settings')}
         activeView={activeView}
       />
       
@@ -235,6 +244,10 @@ function App() {
               onFlashcardReview={handleFlashcardReview}
             />
           )}
+          {activeView === 'forecast' && <Forecasting />}
+          {activeView === 'optimize' && <Optimization />}
+          {activeView === 'history' && <RecentAnalyses />}
+          {activeView === 'settings' && <Settings theme={theme} toggleTheme={toggleTheme} />}
         </main>
       </div>
 
