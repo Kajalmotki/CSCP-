@@ -212,7 +212,7 @@ function App() {
         />
         
         <main className="main-workspace">
-          {activeView === 'dashboard' && <Dashboard />}
+          {activeView === 'dashboard' && <Dashboard quizStats={quizStats} gamification={gamification} flashcardProgress={flashcardProgress} />}
           {activeView === 'analyze' && (
             <SituationalAI
               isOpen={true}

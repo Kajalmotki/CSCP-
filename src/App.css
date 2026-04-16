@@ -5,6 +5,7 @@
     width: 100vw;
     overflow: hidden;
     background-color: var(--bg-primary);
+    color: var(--text-primary);
 }
 
 .layout-content {

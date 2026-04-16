@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import './SituationalAI.css';
+import 'katex/dist/katex.min.css';
+import { InlineMath, BlockMath } from 'react-katex';
 import { generateAdvancedAnswer } from '../utils/AdvancedSearchEngine';
 import {
     parseMarkdownTable,
@@ -36,14 +38,7 @@ I'm here to help you navigate any supply chain challenge — from supplier disru
 • "How should I handle a sudden spike in demand?"
 • "What strategies reduce lead time variability?"`;
 
-const SUGGESTIONS = [
-    "My key supplier just went bankrupt. What should I do?",
-    "We have excess inventory that's tying up cash. What are our options?",
-    "How do I handle a port strike disrupting our supply chain?",
-    "Our demand forecast is off by 40%. How do we respond?",
-    "A major quality defect was found in shipped goods. What now?"
-];
-
+const SUGGESTIONS = [];
 const SituationalAI = ({ isOpen, onClose }) => {
     const [mode, setMode] = useState('chat'); // 'chat' | 'voice'
     const [messages, setMessages] = useState([
@@ -265,12 +260,13 @@ const SituationalAI = ({ isOpen, onClose }) => {
     };
 
     const renderInline = (text) => {
-        // Split on **bold**, *italic*, and `code` markers
-        const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+        // Split on **bold**, *italic*, `code` markers, and $math$
+        const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`|\$[^$]+\$)/g);
         return parts.map((part, j) => {
             if (part.startsWith('**') && part.endsWith('**')) return <strong key={j}>{part.slice(2, -2)}</strong>;
             if (part.startsWith('*') && part.endsWith('*') && part.length > 2) return <em key={j} style={{ color: '#000' }}>{part.slice(1, -1)}</em>;
             if (part.startsWith('`') && part.endsWith('`')) return <code key={j} style={{ background: 'rgba(0,0,0,0.05)', borderRadius: '3px', padding: '0 4px', fontSize: '0.88em', color: '#000' }}>{part.slice(1, -1)}</code>;
+            if (part.startsWith('$') && part.endsWith('$')) return <InlineMath key={j} math={part.slice(1, -1)} />;
             return part;
         });
     };
@@ -325,6 +321,25 @@ const SituationalAI = ({ isOpen, onClose }) => {
                     elements.push(<p key={elements.length} style={{ margin: '0.12rem 0', lineHeight: '1.55', color: '#000' }}>{renderInline(tl)}</p>);
                 });
                 continue;
+            }
+
+            // Detect Multi-line Block Math ($$)
+            if (trimmed === '$$') {
+                const mathLines = [];
+                i++;
+                while (i < lines.length && lines[i].trim() !== '$$') {
+                    mathLines.push(lines[i]);
+                    i++;
+                }
+                elements.push(<div key={`math-${i}`} style={{ margin: '1rem 0', overflowX: 'auto' }}><BlockMath math={mathLines.join('\n')} /></div>);
+                i++; // Skip closing $$
+                continue;
+            }
+            
+            // Detect Single-line Block Math ($$ ... $$)
+            if (trimmed.startsWith('$$') && trimmed.endsWith('$$') && trimmed.length > 2) {
+                elements.push(<div key={`math-${i}`} style={{ margin: '1rem 0', overflowX: 'auto' }}><BlockMath math={trimmed.slice(2, -2)} /></div>);
+                i++; continue;
             }
 
             // H2 header (##)
@@ -492,17 +507,7 @@ const SituationalAI = ({ isOpen, onClose }) => {
                     <div ref={messagesEndRef} />
                 </div>
 
-                {/* Quick Suggestions (show when only 1 message) */}
-                {messages.length === 1 && !isLoading && (
-                    <div className="sai-suggestions">
-                        {SUGGESTIONS.map((s, i) => (
-                            <button key={i} className="sai-suggestion" onClick={() => sendQuestion(s)}>
-                                {s}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
+                {/* Quick Suggestions removed */}
                 {/* Input Area */}
                 {mode === 'chat' ? (
                     <div className="sai-input-area" style={{ position: 'relative' }}>

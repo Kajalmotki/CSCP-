@@ -74,7 +74,7 @@
 .kpi-card {
     padding: 1.5rem;
     background: var(--bg-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     backdrop-filter: blur(12px);
     transition: var(--transition-normal);
@@ -114,8 +114,14 @@
 .kpi-value {
     font-size: 2rem;
     font-weight: 800;
-    margin-bottom: 1rem;
+    margin-bottom: 0.2rem;
     color: var(--text-primary);
+}
+
+.kpi-sub {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.2rem;
 }
 
 .kpi-visual-bar {
@@ -140,7 +146,7 @@
 
 .dash-panel {
     background: var(--bg-secondary);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
     padding: 1.5rem;
 }
@@ -153,52 +159,72 @@
     gap: 10px;
 }
 
-/* Network Radar Visualization */
-.viz-placeholder {
-    height: 350px;
+/* Chapter Performance Breakdown */
+.chapter-perf-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.chapter-perf-item {
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 1.2rem;
     display: flex;
     flex-direction: column;
+    gap: 8px;
+    transition: var(--transition-fast);
+}
+
+.chapter-perf-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
+}
+
+.chapter-perf-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.chapter-perf-bar-wrap {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    position: relative;
+    gap: 10px;
+}
+
+.chapter-perf-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
     overflow: hidden;
 }
 
-.radar-circle {
-    width: 250px;
-    height: 250px;
-    border: 1px solid var(--accent-glow);
-    border-radius: 50%;
-    position: relative;
+.chapter-perf-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease-out;
 }
 
-.radar-circle::before, .radar-circle::after {
-    content: '';
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    border: 1px solid var(--accent-glow);
-    border-radius: 50%;
+.strong .chapter-perf-fill { background: #10b981; }
+.moderate .chapter-perf-fill { background: #f59e0b; }
+.weak .chapter-perf-fill { background: #ef4444; }
+.not-started .chapter-perf-fill { background: transparent; }
+
+.chapter-perf-pct {
+    font-size: 0.85rem;
+    font-weight: 700;
+    width: 35px;
+    text-align: right;
 }
 
-.radar-circle::before { width: 150px; height: 150px; }
-.radar-circle::after { width: 50px; height: 50px; }
-
-.radar-scanner {
-    position: absolute;
-    width: 125px;
-    height: 125px;
-    background: conic-gradient(from 0deg, var(--accent-primary) 0%, transparent 30%);
-    top: calc(50% - 125px);
-    left: 50%;
-    transform-origin: bottom left;
-    animation: rotate 4s linear infinite;
-    opacity: 0.3;
-}
-
-@keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+.chapter-perf-detail {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
 /* Signals List */
